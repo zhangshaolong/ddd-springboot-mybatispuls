@@ -1,0 +1,63 @@
+# Spring 核心配置
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ddd_demo?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 12345678
+  # 可选：HikariCP连接池优化（Spring Boot默认）
+  datasource.hikari:
+    maximum-pool-size: 10
+    minimum-idle: 5
+    connection-timeout: 30000
+    max-lifetime: 1800000
+
+  redis:
+    data:
+      host: localhost        # 核心：3.x需配置在spring.redis.data.host下
+      port: 6379             # Redis端口（默认6379）
+      password: ''           # Redis密码（无密码留空）
+      database: 0            # 数据库索引（默认0）
+redisson:
+  # 单机模式配置（核心：层级和缩进必须正确）
+  singleServerConfig:
+    # 注意：这里是singleServerConfig（驼峰），不是single-server-config（横线）！
+    address: redis://${spring.redis.data.host}:${spring.redis.data.port}
+    password: ${spring.redis.data.password}
+    database: ${spring.redis.data.database}
+    # 锁自动续期时间（watch dog）
+    lockWatchdogTimeout: 30000
+    # 连接超时时间
+    connectTimeout: 10000
+    # 超时重试次数
+    retryAttempts: 3
+    # 重试间隔
+    retryInterval: 1500
+
+# MyBatis-Plus 核心配置
+mybatis-plus:
+  #   Mapper接口对应的XML文件路径（必填）
+  #  mapper-locations: classpath:mapper/**/*.xml
+  # 实体类包路径（可选，开启别名后XML中可直接用类名，无需全限定名）
+  #    type-aliases-package: com.demo.dddspringbootmybatispuls
+  # 全局配置
+  global-config:
+    db-config:
+      # 主键生成策略（推荐雪花算法，适配分布式场景）
+      id-type: ASSIGN_ID
+      # 表名前缀（可选，比如表都以t_开头，实体类无需加前缀）
+      # table-prefix: t_
+      # 逻辑删除字段配置（可选，开发常用）
+      logic-delete-field: is_deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  # 配置项（开启驼峰命名转换、日志等）
+  configuration:
+    # 开启驼峰命名自动转换（比如数据库user_name → 实体类userName）
+    map-underscore-to-camel-case: true
+    # 开启SQL日志打印（开发环境用，生产环境关闭）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 关闭一级缓存（避免开发环境数据不一致）
+    local-cache-scope: STATEMENT
+    # 空值处理（查询时不返回null字段，可选）
+    call-setters-on-nulls: true
