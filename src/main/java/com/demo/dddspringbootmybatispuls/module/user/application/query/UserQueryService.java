@@ -1,7 +1,7 @@
 package com.demo.dddspringbootmybatispuls.module.user.application.query;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.demo.dddspringbootmybatispuls.common.convert.ConvertMapper;
+import com.demo.dddspringbootmybatispuls.common.mapper.StructMapper;
 import com.demo.dddspringbootmybatispuls.module.user.application.query.dto.UserDTO;
 import com.demo.dddspringbootmybatispuls.module.user.infrastructure.dataobject.UserDO;
 import com.demo.dddspringbootmybatispuls.module.user.infrastructure.mapper.UserMapper;
@@ -22,7 +22,7 @@ public class UserQueryService {
         if (userDO == null) {
             return null;
         }
-        return ConvertMapper.to(userDO, UserDTO.class);
+        return StructMapper.to(userDO, UserDTO.class);
     }
 
     public List<UserDTO> getUsers() {
@@ -30,6 +30,6 @@ public class UserQueryService {
         if (userDOList.isEmpty()) {
             return new ArrayList<>();
         }
-        return ConvertMapper.toList(userDOList, UserDTO.class);
+        return StructMapper.toList(userDOList, UserDTO.class);
     }
 }

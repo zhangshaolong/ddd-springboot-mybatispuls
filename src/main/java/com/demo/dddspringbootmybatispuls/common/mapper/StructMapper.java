@@ -1,4 +1,4 @@
-package com.demo.dddspringbootmybatispuls.common.convert;
+package com.demo.dddspringbootmybatispuls.common.mapper;
 
 
 import org.springframework.cglib.beans.BeanCopier;
@@ -10,10 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 高性能动态映射工具类
- * 核心API：ConvertMapper.to(source, targetClass, rules)
+ * 核心API：StructMapper.to(source, targetClass, rules)
  * 性能优化：ASM字节码（BeanCopier）+ 双层缓存 + 空值安全
+ * @author zhangshaolong
  */
-public final class ConvertMapper {
+public final class StructMapper {
     // ========== 性能缓存 ==========
     /**
      * BeanCopier缓存：key=源类型名+目标类型名，value=BeanCopier实例（ASM字节码实现，接近硬编码性能）
@@ -32,7 +33,7 @@ public final class ConvertMapper {
     private static final List<MappingRule<?, ?>> EMPTY_RULES = List.of();
 
     // 私有构造器：禁止实例化
-    private ConvertMapper() {
+    private StructMapper() {
     }
 
     // ========== 核心API：单个对象转换 ==========
@@ -213,6 +214,6 @@ public final class ConvertMapper {
      * -Dsun.reflect.noCheckMemberAccess=true
      */
     public static void printPerformanceTips() {
-        System.out.println("【ConvertMapper性能优化】建议添加JVM参数：-Dsun.reflect.noCheckMemberAccess=true");
+        System.out.println("【StructMapper性能优化】建议添加JVM参数：-Dsun.reflect.noCheckMemberAccess=true");
     }
 }

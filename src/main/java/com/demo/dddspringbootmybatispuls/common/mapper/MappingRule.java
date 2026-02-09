@@ -1,9 +1,10 @@
-package com.demo.dddspringbootmybatispuls.common.convert;
+package com.demo.dddspringbootmybatispuls.common.mapper;
 import java.util.function.Function;
 
 /**
  * 动态映射规则：支持字段映射、忽略、自定义转换
  * 不可变设计，线程安全
+ * @author zhangshaolong
  */
 public final class MappingRule<S, T> {
     private final String sourceField;
