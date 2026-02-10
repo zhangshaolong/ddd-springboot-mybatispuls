@@ -1,6 +1,5 @@
 package com.demo.dddspringbootmybatispuls.common.mapper;
 
-
 import org.springframework.cglib.beans.BeanCopier;
 
 import java.lang.reflect.Field;
@@ -12,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 高性能动态映射工具类
  * 核心API：StructMapper.to(source, targetClass, rules)
  * 性能优化：ASM字节码（BeanCopier）+ 双层缓存 + 空值安全
+ *
  * @author zhangshaolong
  */
 public final class StructMapper {
@@ -26,7 +26,6 @@ public final class StructMapper {
      */
     private static final Map<String, Field> FIELD_CACHE = new ConcurrentHashMap<>();
 
-    // ========== 空值常量 ==========
     /**
      * 空规则常量：复用，减少对象创建
      */
@@ -37,14 +36,13 @@ public final class StructMapper {
     }
 
     // ========== 核心API：单个对象转换 ==========
+
     /**
      * 动态映射单个对象
      *
      * @param source       源对象（非null）
      * @param targetClass  目标类（非null，需有无参构造器）
      * @param mappingRules 动态映射规则（可为null，null则仅基础映射）
-     * @param <S>          源类型
-     * @param <T>          目标类型
      * @return 转换后的目标对象
      */
     @SuppressWarnings("unchecked")
@@ -58,7 +56,7 @@ public final class StructMapper {
         }
 
         // 2. 空规则兜底（泛型友好，无强制转换）
-        List<MappingRule<S, T>> rules = mappingRules == null ? (List<MappingRule<S, T>>) (List<?>)EMPTY_RULES : mappingRules;
+        List<MappingRule<S, T>> rules = mappingRules == null ? (List<MappingRule<S, T>>) (List<?>) EMPTY_RULES : mappingRules;
 
         try {
             // 3. 创建目标对象实例（要求无参构造器）
@@ -80,10 +78,21 @@ public final class StructMapper {
      * 简化重载：无动态规则（仅基础字段映射）
      */
     public static <S, T> T to(S source, Class<T> targetClass) {
-        return to(source, targetClass, null);
+        return to(source, targetClass, List.of());
+    }
+
+    /**
+     * 简化重载：单动态规则
+     */
+    public static <S, T> T to(S source, Class<T> targetClass, MappingRule<S, T> mappingRule) {
+        if (null == mappingRule) {
+            return to(source, targetClass);
+        }
+        return to(source, targetClass, List.of(mappingRule));
     }
 
     // ========== 扩展API：集合转换 ==========
+
     /**
      * 动态映射集合对象
      *
@@ -104,7 +113,7 @@ public final class StructMapper {
     }
 
     /**
-     * 简化重载：集合转换（无动态规则）
+     * 集合转换（无动态规则）
      */
     public static <S, T> List<T> toList(List<S> sourceList, Class<T> targetClass) {
         return toList(sourceList, targetClass, null);
@@ -149,7 +158,6 @@ public final class StructMapper {
         Class<T> targetClass = (Class<T>) target.getClass();
 
         for (MappingRule<S, T> rule : rules) {
-            // 跳过忽略规则（已在基础映射处理）
             if (rule.isIgnore()) {
                 continue;
             }
@@ -158,17 +166,17 @@ public final class StructMapper {
                 // 1. 获取源字段值
                 Field sourceField = getCachedField(sourceClass, rule.getSourceField());
                 sourceField.setAccessible(true);
-                Object sourceValue = sourceField.get(source);
+                Object fieldValue = sourceField.get(source);
 
-                // 2. 应用自定义转换
-                if (rule.getCustomConverter() != null) {
-                    sourceValue = rule.getCustomConverter().apply(sourceValue);
+                // 2. 应用自定义转换器
+                if (rule.getConverter() != null) {
+                    fieldValue = rule.getConverter().apply(fieldValue, source);
                 }
 
                 // 3. 设置目标字段值（覆盖基础映射）
                 Field targetField = getCachedField(targetClass, rule.getTargetField());
                 targetField.setAccessible(true);
-                targetField.set(target, sourceValue);
+                targetField.set(target, fieldValue);
             } catch (NoSuchFieldException e) {
                 throw new RuntimeException("映射规则错误：字段不存在 → 源字段=" + rule.getSourceField() + "，目标字段=" + rule.getTargetField(), e);
             } catch (IllegalAccessException e) {
@@ -209,6 +217,7 @@ public final class StructMapper {
     }
 
     // ========== 性能优化建议：JVM参数 ==========
+
     /**
      * 可选JVM参数：关闭反射安全检查，进一步提升性能（部署时添加）
      * -Dsun.reflect.noCheckMemberAccess=true
