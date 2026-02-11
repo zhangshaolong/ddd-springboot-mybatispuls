@@ -8,14 +8,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderDTO {
-    private Long orderId;
-    private String orderName;
+  private Long orderId;
+  private String orderName;
 
-    @Override
-    public String toString() {
-        return "OrderDTO{" +
-                "orderId=" + orderId +
-                ", orderName='" + orderName + '\'' +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "OrderDTO{" + "orderId=" + orderId + ", orderName='" + orderName + '\'' + '}';
+  }
 }

@@ -8,16 +8,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddressDTO {
-    private String province;
-    private String city;
-    private String fullAddress; // 新增：省+市拼接
+  private String province;
+  private String city;
+  private String fullAddress; // 新增：省+市拼接
 
-    @Override
-    public String toString() {
-        return "AddressDTO{" +
-                "province='" + province + '\'' +
-                ", city='" + city + '\'' +
-                ", fullAddress='" + fullAddress + '\'' +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "AddressDTO{"
+        + "province='"
+        + province
+        + '\''
+        + ", city='"
+        + city
+        + '\''
+        + ", fullAddress='"
+        + fullAddress
+        + '\''
+        + '}';
+  }
 }

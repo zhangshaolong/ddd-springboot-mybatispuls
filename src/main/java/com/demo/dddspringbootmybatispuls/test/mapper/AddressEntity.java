@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddressEntity {
-    private String province;
-    private String city;
-
+  private String province;
+  private String city;
 }

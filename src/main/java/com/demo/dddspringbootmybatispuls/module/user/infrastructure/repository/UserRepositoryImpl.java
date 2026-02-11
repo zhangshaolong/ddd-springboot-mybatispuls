@@ -9,12 +9,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class UserRepositoryImpl implements UserRepository {
 
-    @Resource
-    private UserMapper userMapper;
+  @Resource private UserMapper userMapper;
 
-    @Override
-    public UserDO findById(Long id) {
-        return userMapper.selectById(id);
-    }
+  @Override
+  public UserDO findById(Long id) {
+    return userMapper.selectById(id);
+  }
 }
-

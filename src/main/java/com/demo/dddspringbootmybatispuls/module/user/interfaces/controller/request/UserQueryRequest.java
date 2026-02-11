@@ -9,6 +9,6 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class UserQueryRequest extends PageRequest {
-    private String username; // 模糊查询用户名
-    private String phone;    // 精准查询手机号
+  private String username; // 模糊查询用户名
+  private String phone; // 精准查询手机号
 }

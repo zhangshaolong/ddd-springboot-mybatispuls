@@ -10,6 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StudentEntity extends UserEntity {
-    private String studentNo;
+  private String studentNo;
 }
-

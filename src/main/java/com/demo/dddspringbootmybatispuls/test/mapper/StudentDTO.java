@@ -10,18 +10,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StudentDTO extends UserDTO {
-    private String studentNo;
+  private String studentNo;
 
-    @Override
-    public String toString() {
-        return "StudentDTO{" +
-                "id=" + getId() +
-                ", name='" + getName() + '\'' +
-                ", address=" + getAddress() +
-                ", orders=" + getOrders() +
-                ", studentNo=" + getStudentNo() +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "StudentDTO{"
+        + "id="
+        + getId()
+        + ", name='"
+        + getName()
+        + '\''
+        + ", address="
+        + getAddress()
+        + ", orders="
+        + getOrders()
+        + ", studentNo="
+        + getStudentNo()
+        + '}';
+  }
 }
-
-

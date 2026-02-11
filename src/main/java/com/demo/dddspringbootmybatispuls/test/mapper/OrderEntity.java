@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderEntity {
-    private Long orderId;
-    private String orderName;
-
+  private Long orderId;
+  private String orderName;
 }

@@ -8,20 +8,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * @author zhangshaolong
  */
-
 @MapperScan(
-        basePackages = "com.demo.dddspringbootmybatispuls.module.**.infrastructure.mapper",
-        annotationClass = Mapper.class
-)
+    basePackages = "com.demo.dddspringbootmybatispuls.module.**.infrastructure.mapper",
+    annotationClass = Mapper.class)
 @SpringBootApplication
 public class DddSpringbootMybatispulsApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(DddSpringbootMybatispulsApplication.class, args);
-    }
-
+  public static void main(String[] args) {
+    SpringApplication.run(DddSpringbootMybatispulsApplication.class, args);
+  }
 }
-
-
-
-
-
