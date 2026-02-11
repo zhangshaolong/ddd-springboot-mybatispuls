@@ -162,6 +162,11 @@ public final class StructMapper {
                 continue;
             }
 
+            if (rule.isGlobalRule()) {
+                rule.getGlobalHandler().accept(source, target);
+                continue;
+            }
+
             try {
                 // 1. 获取源字段值
                 Field sourceField = getCachedField(sourceClass, rule.getSourceField());

@@ -1,5 +1,6 @@
 package com.demo.dddspringbootmybatispuls.common.mapper;
 
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -14,12 +15,14 @@ public final class MappingRule<S, T> {
     private final String targetField;
     private final boolean ignore;
     private final BiFunction<Object, S, Object> converter;
+    private final BiConsumer<S, T> globalHandler;
 
-    private MappingRule(String sourceField, String targetField, boolean ignore, BiFunction<Object, S, Object> converter) {
+    private MappingRule(String sourceField, String targetField, boolean ignore, BiFunction<Object, S, Object> converter, BiConsumer<S, T> globalHandler) {
         this.sourceField = sourceField;
         this.targetField = targetField;
         this.ignore = ignore;
         this.converter = converter;
+        this.globalHandler = globalHandler;
 
         // 合法性校验
         validate();
@@ -29,14 +32,14 @@ public final class MappingRule<S, T> {
      * 基础字段映射：源字段 → 目标字段
      */
     public static <S, T> MappingRule<S, T> of(String sourceField, String targetField) {
-        return new MappingRule<>(sourceField, targetField, false, null);
+        return new MappingRule<>(sourceField, targetField, false, null, null);
     }
 
     /**
      * 忽略指定字段
      */
     public static <S, T> MappingRule<S, T> ignore(String fieldName) {
-        return new MappingRule<>(fieldName, fieldName, true, null);
+        return new MappingRule<>(fieldName, fieldName, true, null, null);
     }
 
     /**
@@ -50,7 +53,7 @@ public final class MappingRule<S, T> {
         if (converter == null) {
             throw new IllegalArgumentException("自定义转换器不能为空");
         }
-        return new MappingRule<>(sourceField, targetField, false, converter);
+        return new MappingRule<>(sourceField, targetField, false, converter, null);
     }
 
     /**
@@ -66,7 +69,28 @@ public final class MappingRule<S, T> {
         return custom(sourceField, targetField, biConverter);
     }
 
+    /**
+     * 全局自定义处理器：支持任意类型的定制化处理，脱离字段绑定
+     *
+     * @param globalHandler 全局处理函数，入参1=源对象实例，入参2=目标对象实例，直接修改目标对象
+     * @param <S>           源对象类型
+     * @param <T>           目标对象类型
+     * @return 全局处理规则
+     */
+    public static <S, T> MappingRule<S, T> global(BiConsumer<S, T> globalHandler) {
+        if (globalHandler == null) {
+            throw new IllegalArgumentException("全局处理器不能为空");
+        }
+        return new MappingRule<>(null, null, false, null, globalHandler);
+    }
+
     private void validate() {
+        if (globalHandler != null) {
+            if (sourceField != null || targetField != null || ignore || converter != null) {
+                throw new IllegalArgumentException("全局规则不能同时设置字段名、忽略标记或字段转换器");
+            }
+            return;
+        }
         if (targetField == null || targetField.isBlank()) {
             throw new IllegalArgumentException("目标字段名不能为空");
         }
@@ -96,5 +120,13 @@ public final class MappingRule<S, T> {
 
     public BiFunction<Object, S, Object> getConverter() {
         return converter;
+    }
+
+    public BiConsumer<S, T> getGlobalHandler() {
+        return globalHandler;
+    }
+
+    public boolean isGlobalRule() {
+        return globalHandler != null;
     }
 }
