@@ -16,6 +16,13 @@ public class Result<T> {
     return result;
   }
 
+  public static <T> Result<T> success() {
+    Result<T> result = new Result<>();
+    result.setCode(200);
+    result.setMsg("成功");
+    return result;
+  }
+
   public static <T> Result<T> fail(String msg) {
     Result<T> result = new Result<>();
     result.setCode(500);
