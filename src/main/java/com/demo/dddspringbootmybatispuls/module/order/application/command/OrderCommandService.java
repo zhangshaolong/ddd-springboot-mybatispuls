@@ -34,7 +34,7 @@ public class OrderCommandService {
   public void update() {
     // 1. 构造初始聚合根
     Order order = new Order();
-    order.setId(1L);
+    //    order.setId(1L);
     order.setVersion(1L);
     order.setOrderNo("ORDER_20260211_001");
     order.setStatus("UNPAID");
@@ -54,15 +54,13 @@ public class OrderCommandService {
     payment.setPayType("ALIPAY");
     List<OrderItem> items = new ArrayList<OrderItem>();
     items.add(item1);
-    order.setItems(items);
-    order.setPayment(payment);
+    //    order.setItems(items);
+    //    order.setPayment(payment);
     //    aggregatePersistenceManager.setDebug(true);
     aggregateTracker.buildSnapshot(order);
 
     // 3. 模拟业务修改
     order.setStatus("PAID"); // 修改订单状态
-    payment.setPayType("WECHAT"); // 修改支付方式
-    payment.setOrderId(1L);
 
     // 新增订单项
     OrderItem item2 = new OrderItem();
@@ -72,7 +70,11 @@ public class OrderCommandService {
     order.getItems().add(item2);
 
     // 删除原有订单项
-    order.getItems().remove(item1);
+    //    order.getItems().remove(item1);
+
+    //    aggregateTracker.buildSnapshot(order);
+    payment.setPayType("WECHAT"); // 修改支付方式
+    payment.setOrderId(1L);
 
     // 4. 对比变更
     AggregateChanges changes = aggregateTracker.compareChanges(order, entityDOMapping);

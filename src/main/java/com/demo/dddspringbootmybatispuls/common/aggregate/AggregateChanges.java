@@ -16,6 +16,9 @@ public class AggregateChanges implements Serializable {
   /** 聚合根最新版本号 */
   private Long aggregateVersion;
 
+  /** 聚合根ID（新增：用于持久化层定位主实体） */
+  private Long aggregateRootId;
+
   /** 单表的增删改列表 */
   @Data
   public static class TableChanges<DO> implements Serializable {
