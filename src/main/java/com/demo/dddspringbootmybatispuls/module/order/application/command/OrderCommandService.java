@@ -54,9 +54,10 @@ public class OrderCommandService {
     payment.setAmount(new java.math.BigDecimal("200.00"));
     payment.setPayType("ALIPAY");
     List<OrderItem> items = new ArrayList<OrderItem>();
+    items.add(item1);
     order.setItems(items);
     order.setPayment(payment);
-
+    //    aggregatePersistenceManager.setDebug(true);
     // 2. 生成快照
     Map<Object, BaseDomainEntity> snapshot = aggregateTracker.buildSnapshot(order);
 
@@ -83,21 +84,5 @@ public class OrderCommandService {
 
     System.out.println("✅ 聚合根变更持久化完成！");
     System.out.println("📌 聚合根最新版本：" + changes.getAggregateVersion()); // 预期2
-  }
-
-  /** 保存订单聚合根变更 */
-  public void saveOrder(Order order) {
-    // 1. 生成快照（首次保存时快照为空，可跳过）
-    Map<Object, BaseDomainEntity> snapshot = aggregateTracker.buildSnapshot(order);
-
-    // 2. 模拟业务修改（实际业务中由业务逻辑修改）
-    order.setStatus("PAID");
-    order.getPayment().setPayType("WECHAT");
-
-    // 3. 对比变更
-    AggregateChanges changes = aggregateTracker.compareChanges(snapshot, order, ENTITY_DO_MAPPING);
-
-    // 4. 持久化变更
-    aggregatePersistenceManager.persist(changes);
   }
 }

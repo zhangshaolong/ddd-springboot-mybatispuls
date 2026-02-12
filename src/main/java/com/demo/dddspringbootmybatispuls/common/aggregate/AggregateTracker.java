@@ -104,8 +104,7 @@ public class AggregateTracker {
         if (fieldValue == null) continue;
 
         // 处理List<BaseDomainEntity>类型子实体
-        if (fieldValue instanceof List<?>) {
-          List<?> list = (List<?>) fieldValue;
+        if (fieldValue instanceof List<?> list) {
           for (Object item : list) {
             if (item instanceof BaseDomainEntity) {
               entities.addAll(collectAllEntities((BaseDomainEntity) item));

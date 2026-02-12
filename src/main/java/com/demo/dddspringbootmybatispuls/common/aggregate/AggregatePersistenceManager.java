@@ -2,23 +2,22 @@ package com.demo.dddspringbootmybatispuls.common.aggregate;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+@Data
 @Component
 public class AggregatePersistenceManager {
   @Autowired private ApplicationContext applicationContext;
   @Autowired private DoCommonFieldHandler commonFieldHandler;
+  private boolean debug = false;
 
   @SuppressWarnings({"unchecked"})
   public void persist(AggregateChanges changes) {
@@ -27,70 +26,92 @@ public class AggregatePersistenceManager {
       return;
     }
 
-    // 遍历所有DO的变更
     for (Map.Entry<Class<?>, AggregateChanges.TableChanges<?>> entry : tableMap.entrySet()) {
       Class<?> doClass = entry.getKey();
       AggregateChanges.TableChanges<?> tableChanges = entry.getValue();
 
-      // 1. 获取匹配的Mapper
       BaseMapper<?> mapper = getBaseMapper(doClass);
       if (mapper == null) {
         throw new RuntimeException("未找到DO[" + doClass + "]对应的Mapper");
       }
 
-      // 2. 类型转换
       AggregateChanges.TableChanges<Object> typedTable =
           (AggregateChanges.TableChanges<Object>) tableChanges;
 
-      // 3. 处理新增
       if (typedTable.getInsertList() != null && !typedTable.getInsertList().isEmpty()) {
         List<Object> insertList = typedTable.getInsertList();
         insertList.forEach(
             doObj -> commonFieldHandler.fillCommonFields(doObj, EntityChangeType.NEW));
 
         if (insertList.size() == 1) {
-          invokeMapperMethod(mapper, "insert", insertList.get(0));
+          invokeMapperMethod(mapper, "insert", insertList.getFirst());
         } else {
           invokeMapperMethod(mapper, "saveBatch", insertList);
         }
       }
 
-      // 4. 处理修改
       if (typedTable.getUpdateList() != null && !typedTable.getUpdateList().isEmpty()) {
         List<Object> updateList = typedTable.getUpdateList();
         updateList.forEach(
             doObj -> commonFieldHandler.fillCommonFields(doObj, EntityChangeType.MODIFIED));
 
         if (updateList.size() == 1) {
-          invokeMapperMethod(mapper, "updateById", updateList.get(0));
+          invokeMapperMethod(mapper, "updateById", updateList.getFirst());
         } else {
           invokeMapperMethod(mapper, "updateBatchById", updateList);
         }
       }
 
-      // 5. 处理删除
       if (typedTable.getDeleteList() != null && !typedTable.getDeleteList().isEmpty()) {
         List<Object> deleteList = typedTable.getDeleteList();
-        List<Long> deleteIds =
-            deleteList.stream()
-                .map(
-                    doObj -> {
-                      try {
-                        Field idField = doObj.getClass().getDeclaredField("id");
-                        idField.setAccessible(true);
-                        return (Long) idField.get(doObj);
-                      } catch (Exception e) {
-                        throw new RuntimeException("获取DO的id失败", e);
-                      }
-                    })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        List<Long> deleteIds = new ArrayList<>();
+
+        for (Object doObj : deleteList) {
+          if (doObj == null) {
+            System.err.println("删除列表中存在null的DO对象，跳过");
+            continue;
+          }
+
+          try {
+            Long id = getId(doObj);
+
+            if (id == null) {
+              System.err.println("DO[" + doObj.getClass() + "]的id为null，跳过删除");
+              continue;
+            }
+
+            deleteIds.add(id);
+          } catch (Exception e) {
+            throw new RuntimeException("获取DO[" + doObj.getClass() + "]的id失败", e);
+          }
+        }
 
         if (!deleteIds.isEmpty()) {
           invokeMapperMethod(mapper, "deleteBatchIds", deleteIds);
+        } else {
+          System.err.println("无有效删除ID，跳过批量删除");
         }
       }
     }
+  }
+
+  private static Long getId(Object doObj) throws IllegalAccessException {
+    Field idField = null;
+    Class<?> clazz = doObj.getClass();
+    while (clazz != null && idField == null) {
+      try {
+        idField = clazz.getDeclaredField("id");
+      } catch (NoSuchFieldException e) {
+        clazz = clazz.getSuperclass();
+      }
+    }
+
+    if (idField == null) {
+      throw new RuntimeException("DO[" + doObj.getClass() + "]未找到id字段");
+    }
+
+    idField.setAccessible(true);
+    return (Long) idField.get(doObj);
   }
 
   /** 通过DO类型匹配对应的Mapper */
@@ -120,33 +141,15 @@ public class AggregatePersistenceManager {
     return null;
   }
 
-  /** 反射调用Mapper方法 */
-  // 聚合根持久化管理器中 invokeMapperMethod 方法修正
   private void invokeMapperMethod(BaseMapper<?> mapper, String methodName, Object param) {
     try {
-      Class<?>[] paramTypes;
-      // 根据方法名匹配正确的参数类型
-      if ("insert".equals(methodName)) {
-        paramTypes = new Class[] {Object.class};
-      } else if ("updateById".equals(methodName)) {
-        paramTypes = new Class[] {Object.class};
-      } else if ("deleteById".equals(methodName)) {
-        paramTypes = new Class[] {Serializable.class};
-      } else if ("saveBatch".equals(methodName) || "updateBatchById".equals(methodName)) {
-        paramTypes = new Class[] {Collection.class};
-      } else if ("deleteBatchIds".equals(methodName)) {
-        paramTypes = new Class[] {Collection.class};
-      } else {
-        throw new RuntimeException("不支持的Mapper方法：" + methodName);
-      }
-      // 反射调用方法
+      Class<?>[] paramTypes = getClasses(methodName);
       Method method = mapper.getClass().getMethod(methodName, paramTypes);
-      method.invoke(mapper, param);
+      doMapper(mapper, param, method);
     } catch (NoSuchMethodException e) {
-      // 兜底：尝试从 BaseMapper 接口获取方法（解决代理类方法查找失败）
       try {
         Method method = BaseMapper.class.getMethod(methodName, param.getClass());
-        method.invoke(mapper, param);
+        doMapper(mapper, param, method);
       } catch (Exception ex) {
         throw new RuntimeException("Mapper方法调用失败：" + methodName, ex);
       }
@@ -155,20 +158,54 @@ public class AggregatePersistenceManager {
     }
   }
 
-  // Getter & Setter（Spring注入用）
-  public ApplicationContext getApplicationContext() {
-    return applicationContext;
+  private static Class<?>[] getClasses(String methodName) {
+    return switch (methodName) {
+      case "insert", "updateById" -> new Class[] {Object.class};
+      case "deleteById" -> new Class[] {Serializable.class};
+      case "saveBatch", "updateBatchById", "deleteBatchIds" -> new Class[] {Collection.class};
+      case null, default -> throw new RuntimeException("不支持的Mapper方法：" + methodName);
+    };
   }
 
-  public void setApplicationContext(ApplicationContext applicationContext) {
-    this.applicationContext = applicationContext;
+  /**
+   * 获取BaseMapper<T>中T的具体DO类
+   *
+   * @param mapper BaseMapper代理对象
+   * @return 泛型对应的具体DO类，如OrderItemDO.class
+   */
+  private Class<?> getMapperGenericType(BaseMapper<?> mapper) {
+    // 1. 获取Mapper代理对象的真实接口（如OrderItemMapper）
+    Class<?>[] interfaces = mapper.getClass().getInterfaces();
+    for (Class<?> mapperInterface : interfaces) {
+      // 2. 遍历接口的泛型父接口，找到BaseMapper
+      Type[] genericInterfaces = mapperInterface.getGenericInterfaces();
+      for (Type genericInterface : genericInterfaces) {
+        // 3. 仅处理参数化类型（BaseMapper<T>）
+        if (genericInterface instanceof ParameterizedType parameterizedType) {
+          Type rawType = parameterizedType.getRawType();
+          // 4. 确认是BaseMapper
+          if (rawType == BaseMapper.class) {
+            // 5. 获取泛型实际类型（T）
+            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+            if (actualTypeArguments.length > 0) {
+              return (Class<?>) actualTypeArguments[0];
+            }
+          }
+        }
+      }
+    }
+    throw new RuntimeException("无法解析Mapper的泛型类型：" + mapper.getClass().getName());
   }
 
-  public DoCommonFieldHandler getCommonFieldHandler() {
-    return commonFieldHandler;
-  }
-
-  public void setCommonFieldHandler(DoCommonFieldHandler commonFieldHandler) {
-    this.commonFieldHandler = commonFieldHandler;
+  private void doMapper(BaseMapper<?> mapper, Object param, Method method)
+      throws IllegalAccessException, InvocationTargetException {
+    if (debug) {
+      System.out.println("method：" + method.getName());
+      System.out.println("param：" + param);
+      System.out.println("mapper：" + getMapperGenericType(mapper).getName());
+      System.out.println();
+    } else {
+      method.invoke(mapper, param);
+    }
   }
 }

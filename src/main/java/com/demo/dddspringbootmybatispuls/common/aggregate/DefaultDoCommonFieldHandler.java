@@ -1,6 +1,7 @@
 package com.demo.dddspringbootmybatispuls.common.aggregate;
 
 import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
@@ -15,15 +16,15 @@ public class DefaultDoCommonFieldHandler implements DoCommonFieldHandler {
       return;
     }
 
-    //    LocalDateTime now = LocalDateTime.now();
-    //    // 填充创建信息（新增）
-    //    if (EntityChangeType.NEW.equals(changeType)) {
-    //      setFieldValue(doObj, "createTime", now);
-    //      setFieldValue(doObj, "createBy", DEFAULT_OPERATOR);
-    //    }
-    //    // 填充更新信息（新增/修改）
-    //    setFieldValue(doObj, "updateTime", now);
-    //    setFieldValue(doObj, "updateBy", DEFAULT_OPERATOR);
+    LocalDateTime now = LocalDateTime.now();
+    // 填充创建信息（新增）
+    if (EntityChangeType.NEW.equals(changeType)) {
+      setFieldValue(doObj, "createTime", now);
+      setFieldValue(doObj, "createBy", DEFAULT_OPERATOR);
+    }
+    // 填充更新信息（新增/修改）
+    setFieldValue(doObj, "updateTime", now);
+    setFieldValue(doObj, "updateBy", DEFAULT_OPERATOR);
   }
 
   /** 反射设置字段值（兼容不同DO的字段名） */
