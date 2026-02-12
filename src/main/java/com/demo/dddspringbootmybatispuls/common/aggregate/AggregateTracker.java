@@ -3,14 +3,16 @@ package com.demo.dddspringbootmybatispuls.common.aggregate;
 import com.demo.dddspringbootmybatispuls.common.mapper.StructMapper;
 import java.lang.reflect.Field;
 import java.util.*;
+import lombok.Data;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
+@Data
 @Component
-/** 聚合根变更追踪器：生成快照、对比变更 */
 public class AggregateTracker {
-  /** 主键字段名（所有实体/DO必须统一） */
   private static final String ID_FIELD_NAME = "id";
+
+  private Map<Object, BaseDomainEntity> snapshotMap = new HashMap<>();
 
   /**
    * 生成聚合根快照（深拷贝所有实体）
@@ -27,7 +29,7 @@ public class AggregateTracker {
       Object key = id == null ? UUID.randomUUID().toString() : id;
       snapshotMap.put(key, entity.clone());
     }
-    return snapshotMap;
+    return this.snapshotMap = snapshotMap;
   }
 
   /**
@@ -88,33 +90,47 @@ public class AggregateTracker {
     return result;
   }
 
-  // ===================== 私有工具方法 =====================
+  /**
+   * 对比快照与当前聚合根，生成变更结果
+   *
+   * @param aggregateRoot 当前聚合根
+   * @param entityDoMapping 实体→DO类型映射
+   * @return 聚合根变更结果
+   */
+  public <T extends AggregateRoot> AggregateChanges compareChanges(
+      T aggregateRoot, Map<Class<?>, Class<?>> entityDoMapping) {
 
-  /** 递归收集聚合根下所有实体（主实体+子实体） */
+    return compareChanges(this.snapshotMap, aggregateRoot, entityDoMapping);
+  }
+
   private List<BaseDomainEntity> collectAllEntities(BaseDomainEntity root) {
     List<BaseDomainEntity> entities = new ArrayList<>();
     entities.add(root);
 
-    // 反射扫描所有字段，收集子实体
     Field[] fields = root.getClass().getDeclaredFields();
     for (Field field : fields) {
       field.setAccessible(true);
       try {
         Object fieldValue = field.get(root);
-        if (fieldValue == null) continue;
+        switch (fieldValue) {
+          case null -> {
+            continue;
+          }
 
-        // 处理List<BaseDomainEntity>类型子实体
-        if (fieldValue instanceof List<?> list) {
-          for (Object item : list) {
-            if (item instanceof BaseDomainEntity) {
-              entities.addAll(collectAllEntities((BaseDomainEntity) item));
+          // 处理List<BaseDomainEntity>类型子实体
+          case List<?> list -> {
+            for (Object item : list) {
+              if (item instanceof BaseDomainEntity) {
+                entities.addAll(collectAllEntities((BaseDomainEntity) item));
+              }
             }
           }
+          // 处理单个BaseDomainEntity类型子实体
+          case BaseDomainEntity baseDomainEntity ->
+              entities.addAll(collectAllEntities(baseDomainEntity));
+          default -> {}
         }
-        // 处理单个BaseDomainEntity类型子实体
-        else if (fieldValue instanceof BaseDomainEntity) {
-          entities.addAll(collectAllEntities((BaseDomainEntity) fieldValue));
-        }
+
       } catch (IllegalAccessException e) {
         throw new RuntimeException("扫描聚合根子实体失败", e);
       }

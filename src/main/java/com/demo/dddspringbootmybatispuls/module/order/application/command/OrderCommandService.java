@@ -3,7 +3,6 @@ package com.demo.dddspringbootmybatispuls.module.order.application.command;
 import com.demo.dddspringbootmybatispuls.common.aggregate.AggregateChanges;
 import com.demo.dddspringbootmybatispuls.common.aggregate.AggregatePersistenceManager;
 import com.demo.dddspringbootmybatispuls.common.aggregate.AggregateTracker;
-import com.demo.dddspringbootmybatispuls.common.aggregate.BaseDomainEntity;
 import com.demo.dddspringbootmybatispuls.module.order.domain.model.Order;
 import com.demo.dddspringbootmybatispuls.module.order.domain.model.OrderItem;
 import com.demo.dddspringbootmybatispuls.module.order.domain.model.OrderPayment;
@@ -23,13 +22,13 @@ public class OrderCommandService {
   @Autowired private AggregatePersistenceManager aggregatePersistenceManager;
 
   /** 实体→DO映射（可配置到配置文件） */
-  private static final Map<Class<?>, Class<?>> ENTITY_DO_MAPPING;
+  private static final Map<Class<?>, Class<?>> entityDOMapping;
 
   static {
-    ENTITY_DO_MAPPING = new HashMap<>();
-    ENTITY_DO_MAPPING.put(Order.class, OrderDO.class);
-    ENTITY_DO_MAPPING.put(OrderItem.class, OrderItemDO.class);
-    ENTITY_DO_MAPPING.put(OrderPayment.class, OrderPaymentDO.class);
+    entityDOMapping = new HashMap<>();
+    entityDOMapping.put(Order.class, OrderDO.class);
+    entityDOMapping.put(OrderItem.class, OrderItemDO.class);
+    entityDOMapping.put(OrderPayment.class, OrderPaymentDO.class);
   }
 
   public void update() {
@@ -58,8 +57,7 @@ public class OrderCommandService {
     order.setItems(items);
     order.setPayment(payment);
     //    aggregatePersistenceManager.setDebug(true);
-    // 2. 生成快照
-    Map<Object, BaseDomainEntity> snapshot = aggregateTracker.buildSnapshot(order);
+    aggregateTracker.buildSnapshot(order);
 
     // 3. 模拟业务修改
     order.setStatus("PAID"); // 修改订单状态
@@ -77,12 +75,12 @@ public class OrderCommandService {
     order.getItems().remove(item1);
 
     // 4. 对比变更
-    AggregateChanges changes = aggregateTracker.compareChanges(snapshot, order, ENTITY_DO_MAPPING);
+    AggregateChanges changes = aggregateTracker.compareChanges(order, entityDOMapping);
 
     // 5. 持久化所有变更
     aggregatePersistenceManager.persist(changes);
 
     System.out.println("✅ 聚合根变更持久化完成！");
-    System.out.println("📌 聚合根最新版本：" + changes.getAggregateVersion()); // 预期2
+    System.out.println("📌 聚合根最新版本：" + changes.getAggregateVersion());
   }
 }
