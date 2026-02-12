@@ -11,7 +11,6 @@ public abstract class BaseDomainEntity implements Cloneable, Serializable {
 
   private Long id;
 
-  /** 深拷贝（用于生成快照） */
   @Override
   public BaseDomainEntity clone() {
     try {

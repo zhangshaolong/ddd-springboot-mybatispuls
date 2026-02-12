@@ -41,14 +41,14 @@ public class OrderCommandService {
 
     // 构造订单项
     OrderItem item1 = new OrderItem();
-    item1.setId(1001L);
+    item1.setId(2021783464974913538L);
     item1.setOrderId(1L);
     item1.setSkuCode("SKU_001");
     item1.setQuantity(2);
 
     // 构造支付信息
     OrderPayment payment = new OrderPayment();
-    payment.setId(2001L);
+    payment.setId(1L);
     payment.setOrderId(1L);
     payment.setAmount(new java.math.BigDecimal("200.00"));
     payment.setPayType("ALIPAY");
@@ -56,23 +56,26 @@ public class OrderCommandService {
     items.add(item1);
     order.setItems(items);
     order.setPayment(payment);
-    //    aggregatePersistenceManager.setDebug(true);
+    aggregatePersistenceManager.setDebug(true);
     aggregateTracker.buildSnapshot(order);
 
     // 3. 模拟业务修改
-    order.setStatus("PAID"); // 修改订单状态
-    payment.setPayType("WECHAT"); // 修改支付方式
-    payment.setOrderId(1L);
+    order.setStatus("zsl-tt"); // 修改订单状态
 
     // 新增订单项
     OrderItem item2 = new OrderItem();
     item2.setOrderId(1L);
-    item2.setSkuCode("SKU_002");
-    item2.setQuantity(3);
+    item2.setSkuCode("SKU_002112");
+    item2.setQuantity(30);
     order.getItems().add(item2);
 
     // 删除原有订单项
     order.getItems().remove(item1);
+
+    aggregateTracker.buildSnapshot(order);
+    payment.setPayType("zsl-test"); // 修改支付方式
+    payment.setAmount(new java.math.BigDecimal("211100.00"));
+    //    payment.setOrderId(1L);
 
     // 4. 对比变更
     AggregateChanges changes = aggregateTracker.compareChanges(order, entityDOMapping);
