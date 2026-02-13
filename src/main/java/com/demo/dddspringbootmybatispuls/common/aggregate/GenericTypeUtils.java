@@ -1,107 +1,73 @@
 package com.demo.dddspringbootmybatispuls.common.aggregate;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Proxy;
-import java.lang.reflect.Type;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import java.util.Map;
+import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.stereotype.Component;
+import org.springframework.util.ClassUtils;
 
-/** 泛型类型解析工具（终极兼容版：解决Spring/Java版本兼容问题） */
-public class GenericTypeUtils {
+@Component
+public class GenericTypeUtils implements ApplicationContextAware {
+  // 保留静态上下文（备用）
+  private static ApplicationContext defaultContext;
 
-  /**
-   * 解析泛型接口的实际类型参数（纯JDK反射，无Spring依赖）
-   *
-   * @param clazz 实现类（如OrderMapper.class）
-   * @param genericInterface 泛型接口（如BaseMapper.class）
-   * @return 泛型接口的实际类型参数（如OrderDO.class）
-   */
-  public static Class<?> getGenericInterfaceType(Class<?> clazz, Class<?> genericInterface) {
-    // 处理代理类：获取原始类
-    Class<?> targetClass = getTargetClass(clazz);
-
-    // 遍历所有接口，找到目标泛型接口
-    for (Type type : targetClass.getGenericInterfaces()) {
-      if (type instanceof ParameterizedType parameterizedType) {
-        Type rawType = parameterizedType.getRawType();
-        if (rawType instanceof Class<?> && genericInterface.isAssignableFrom((Class<?>) rawType)) {
-          Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-          if (actualTypeArguments.length > 0) {
-            Type actualType = actualTypeArguments[0];
-            return resolveActualType(actualType, targetClass);
-          }
-        }
-      }
-    }
-
-    // 递归查找父类的接口
-    Class<?> superClass = targetClass.getSuperclass();
-    if (superClass != null && superClass != Object.class) {
-      return getGenericInterfaceType(superClass, genericInterface);
-    }
-
-    return null;
+  @Override
+  public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    GenericTypeUtils.defaultContext = applicationContext;
   }
 
-  /** 解析实际类型（处理TypeVariable/ParameterizedType） */
-  private static Class<?> resolveActualType(Type type, Class<?> clazz) {
-    if (type instanceof Class<?>) {
-      return (Class<?>) type;
-    } else if (type instanceof ParameterizedType parameterizedType) {
-      Type rawType = parameterizedType.getRawType();
-      return rawType instanceof Class<?> ? (Class<?>) rawType : null;
-    } else if (type instanceof java.lang.reflect.TypeVariable<?>) {
-      java.lang.reflect.TypeVariable<?> typeVariable = (java.lang.reflect.TypeVariable<?>) type;
-      Type[] bounds = typeVariable.getBounds();
-      if (bounds.length > 0) {
-        return resolveActualType(bounds[0], clazz);
-      }
-    }
-    return null;
-  }
-
-  /** 获取原始类（兼容所有Java版本的代理判断） */
-  private static Class<?> getTargetClass(Class<?> clazz) {
-    // 处理CGLIB代理
-    if (clazz.getName().contains("$$EnhancerBySpringCGLIB$$")) {
-      return clazz.getSuperclass();
-    }
-
-    // 处理JDK动态代理（兼容所有Java版本）
-    if (Proxy.isProxyClass(clazz)) {
-      Class<?>[] interfaces = clazz.getInterfaces();
-      return interfaces.length > 0 ? interfaces[0] : clazz;
-    }
-
-    return clazz;
-  }
-
-  /**
-   * 从Spring容器中根据DO类型查找对应的BaseMapper
-   *
-   * @param applicationContext Spring上下文
-   * @param doClass DO类型
-   * @param <DO> DO泛型
-   * @return 对应的BaseMapper<DO>
-   */
+  // ========== 核心：新增双参数方法（匹配你的调用语法） ==========
   @SuppressWarnings("unchecked")
-  public static <DO> org.apache.ibatis.annotations.Mapper getMapperByDoType(
-      ApplicationContext applicationContext, Class<DO> doClass) {
+  public static <T> BaseMapper<T> getMapperByDoType(
+      ApplicationContext applicationContext, Class<T> doClass) {
+    if (applicationContext == null) {
+      throw new RuntimeException("ApplicationContext不能为空");
+    }
 
-    Map<String, org.apache.ibatis.annotations.Mapper> mapperBeans =
-        applicationContext.getBeansOfType(org.apache.ibatis.annotations.Mapper.class);
+    // 1. 获取所有BaseMapper类型的Bean
+    Map<String, BaseMapper> mapperMap = applicationContext.getBeansOfType(BaseMapper.class);
 
-    for (org.apache.ibatis.annotations.Mapper mapper : mapperBeans.values()) {
+    // 2. 遍历匹配泛型
+    for (BaseMapper<?> mapper : mapperMap.values()) {
       Class<?> mapperClass = mapper.getClass();
-      Class<?> genericDoType =
-          getGenericInterfaceType(
-              mapperClass, com.baomidou.mybatisplus.core.mapper.BaseMapper.class);
-
-      if (genericDoType != null && genericDoType.equals(doClass)) {
-        return mapper;
+      Class<?> genericType = getMapperGenericType(mapperClass, BaseMapper.class);
+      if (genericType != null && genericType.equals(doClass)) {
+        return (BaseMapper<T>) mapper;
       }
     }
 
-    throw new RuntimeException("未找到DO类型[" + doClass.getName() + "]对应的BaseMapper Bean");
+    // 3. 匹配失败抛异常
+    throw new RuntimeException(
+        String.format(
+            "未找到DO类型[%s]对应的BaseMapper Bean，请检查：\n"
+                + "1. Mapper接口是否继承BaseMapper<%s>；\n"
+                + "2. Mapper是否被Spring扫描（@MapperScan）；\n"
+                + "3. DO类型是否与Mapper泛型一致",
+            doClass.getName(), doClass.getSimpleName()));
+  }
+
+  // ========== 单参数重载方法（备用） ==========
+  public static <T> BaseMapper<T> getMapperByDoType(Class<T> doClass) {
+    if (defaultContext == null) {
+      throw new RuntimeException("ApplicationContext未初始化，请确保工具类被Spring管理");
+    }
+    return getMapperByDoType(defaultContext, doClass);
+  }
+
+  // ========== 辅助方法：解析泛型 ==========
+  private static Class<?> getMapperGenericType(Class<?> mapperClass, Class<?> baseInterface) {
+    // 获取动态代理类的原始接口
+    Class<?>[] interfaces = ClassUtils.getAllInterfacesForClass(mapperClass);
+    for (Class<?> iface : interfaces) {
+      if (baseInterface.isAssignableFrom(iface) && iface.getGenericInterfaces().length > 0) {
+        // 解析BaseMapper<T>中的T类型
+        return (Class<?>)
+            ((java.lang.reflect.ParameterizedType) iface.getGenericInterfaces()[0])
+                .getActualTypeArguments()[0];
+      }
+    }
+    return null;
   }
 }
