@@ -10,16 +10,15 @@ import com.demo.dddspringbootmybatispuls.module.order.domain.model.OrderPayment;
 import com.demo.dddspringbootmybatispuls.module.order.infrastructure.dataobject.OrderDO;
 import com.demo.dddspringbootmybatispuls.module.order.infrastructure.dataobject.OrderItemDO;
 import com.demo.dddspringbootmybatispuls.module.order.infrastructure.dataobject.OrderPaymentDO;
+import jakarta.annotation.Resource;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class OrderCommandService {
-  @Autowired private AggregateTracker aggregateTracker;
-  @Autowired private AggregatePersistenceManager aggregatePersistenceManager;
+  @Resource private AggregateTracker aggregateTracker;
+  @Resource private AggregatePersistenceManager aggregatePersistenceManager;
 
   /** 实体→DO映射（可配置到配置文件） */
   private static final Map<Class<?>, Class<?>> entityDOMapping;
@@ -51,8 +50,8 @@ public class OrderCommandService {
     payment.setPayType("ALIPAY");
     order.setPayment(payment);
     order.getItems().add(item1);
-    Aggregate<Order> aggregate = aggregateTracker.build(Order.class);
-    aggregate.setRoot(order);
+    Aggregate<Order> aggregate = aggregateTracker.build(order);
+    //    aggregate.setRoot(order);
     payment.setAmount(new java.math.BigDecimal("20011.00"));
     // 构造订单项
 
@@ -61,8 +60,6 @@ public class OrderCommandService {
     //    List<OrderItem> items = new ArrayList<OrderItem>();
     //    items.add(item1);
     //    order.setItems(items);
-
-    //    aggregatePersistenceManager.setDebug(true);
 
     // 3. 模拟业务修改
     //    order.setStatus("PAID122"); // 修改订单状态
@@ -75,17 +72,16 @@ public class OrderCommandService {
     aggregate.getRoot().getItems().add(item2);
 
     // 删除原有订单项
-    aggregate.getRoot().getItems().remove(item1);
+    //    aggregate.getRoot().getItems().remove(item1);
 
     //    aggregateTracker.buildSnapshot(order);
     //    payment.setPayType("WECHAT"); // 修改支付方式
     //    payment.setOrderId(1L);
-    order.setStatus("abc");
+    //    order.setStatus("abc");
     // 4. 对比变更
     AggregateChanges changes = aggregateTracker.compareChanges();
-    List<?> list = changes.getEntityChanges(Order.class).getInsertList();
     // 5. 持久化所有变更
-    aggregatePersistenceManager.persist(changes, entityDOMapping);
+    aggregatePersistenceManager.persist(changes, entityDOMapping, true);
 
     System.out.println("✅ 聚合根变更持久化完成！");
     System.out.println("📌 聚合根最新版本：" + changes.getAggregateVersion());

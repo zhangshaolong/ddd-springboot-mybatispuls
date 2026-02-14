@@ -60,6 +60,8 @@ public final class StructMapper {
       applyMappingRules(source, target, rules);
 
       return target;
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException("对象转换失败：目标类 " + targetClass.getName() + " 无无参构造器（需显式定义无参构造器）", e);
     } catch (Exception e) {
       throw new RuntimeException(
           "对象转换失败：源类型=" + source.getClass().getName() + "，目标类型=" + targetClass.getName(), e);
@@ -128,11 +130,26 @@ public final class StructMapper {
               try {
                 Field targetField = getCachedField(targetClass, rule.getTargetField());
                 targetField.setAccessible(true);
-                targetField.set(target, null);
+                Object defaultValue = getDefaultValue(targetField.getType());
+                targetField.set(target, defaultValue);
               } catch (Exception e) {
                 // 忽略字段不存在时，不抛异常
               }
             });
+  }
+
+  private static Object getDefaultValue(Class<?> type) {
+    if (type.isPrimitive()) {
+      if (type == int.class) return 0;
+      if (type == long.class) return 0L;
+      if (type == boolean.class) return false;
+      if (type == double.class) return 0.0D;
+      if (type == float.class) return 0.0F;
+      if (type == byte.class) return (byte) 0;
+      if (type == short.class) return (short) 0;
+      if (type == char.class) return '\0';
+    }
+    return null;
   }
 
   // ========== 内部核心：应用动态映射规则 ==========
@@ -189,18 +206,19 @@ public final class StructMapper {
     return sourceClass.getName() + "->" + targetClass.getName();
   }
 
-  // ========== 工具方法：获取缓存的Field（性能优化） ==========
   private static Field getCachedField(Class<?> clazz, String fieldName)
       throws NoSuchFieldException {
     String fieldKey = clazz.getName() + "#" + fieldName;
-    if (FIELD_CACHE.containsKey(fieldKey)) {
-      return FIELD_CACHE.get(fieldKey);
-    }
-
-    // 递归查找父类字段（支持继承）
-    Field field = findFieldRecursively(clazz, fieldName);
-    FIELD_CACHE.put(fieldKey, field);
-    return field;
+    return FIELD_CACHE.computeIfAbsent(
+        fieldKey,
+        k -> {
+          try {
+            return findFieldRecursively(clazz, fieldName);
+          } catch (NoSuchFieldException e) {
+            // 包装为运行时异常（computeIfAbsent 不支持 checked 异常）
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   // ========== 工具方法：递归查找字段（支持父类） ==========
@@ -218,7 +236,6 @@ public final class StructMapper {
   }
 
   // ========== 性能优化建议：JVM参数 ==========
-
   /** 可选JVM参数：关闭反射安全检查，进一步提升性能（部署时添加） -Dsun.reflect.noCheckMemberAccess=true */
   public static void printPerformanceTips() {
     System.out.println("【StructMapper性能优化】建议添加JVM参数：-Dsun.reflect.noCheckMemberAccess=true");
