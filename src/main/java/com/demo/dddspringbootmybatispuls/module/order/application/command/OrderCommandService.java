@@ -1,7 +1,6 @@
 package com.demo.dddspringbootmybatispuls.module.order.application.command;
 
 import com.demo.dddspringbootmybatispuls.common.aggregate.Aggregate;
-import com.demo.dddspringbootmybatispuls.common.aggregate.AggregateChanges;
 import com.demo.dddspringbootmybatispuls.common.aggregate.AggregatePersistenceManager;
 import com.demo.dddspringbootmybatispuls.common.aggregate.AggregateTracker;
 import com.demo.dddspringbootmybatispuls.module.order.domain.model.Order;
@@ -53,6 +52,7 @@ public class OrderCommandService {
     Aggregate<Order> aggregate = aggregateTracker.build(order);
     //    aggregate.setRoot(order);
     payment.setAmount(new java.math.BigDecimal("20011.00"));
+    order.setOrderNo("abc");
     // 构造订单项
 
     //    // 构造支付信息
@@ -66,6 +66,7 @@ public class OrderCommandService {
 
     // 新增订单项
     OrderItem item2 = new OrderItem();
+    item2.setId(222L);
     item2.setOrderId(1L);
     item2.setSkuCode("SKU_002");
     item2.setQuantity(3);
@@ -79,11 +80,11 @@ public class OrderCommandService {
     //    payment.setOrderId(1L);
     //    order.setStatus("abc");
     // 4. 对比变更
-    AggregateChanges changes = aggregateTracker.compareChanges();
+    //    AggregateChanges changes = aggregateTracker.compareChanges();
     // 5. 持久化所有变更
-    aggregatePersistenceManager.persist(changes, entityDOMapping, true);
+    aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, true);
 
     System.out.println("✅ 聚合根变更持久化完成！");
-    System.out.println("📌 聚合根最新版本：" + changes.getAggregateVersion());
+    System.out.println("📌 聚合根最新版本：" + aggregateTracker.getCurrentAggregateRoot().getVersion());
   }
 }
