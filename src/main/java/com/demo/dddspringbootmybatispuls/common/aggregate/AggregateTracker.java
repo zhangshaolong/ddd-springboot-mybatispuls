@@ -12,12 +12,11 @@ import org.springframework.stereotype.Component;
 @Component
 @Data
 public class AggregateTracker {
-  private AggregateRoot currentAggregateRoot;
+
   private Aggregate<? extends AggregateRoot> currentAggregate;
 
   @SuppressWarnings("unchecked")
   public <T extends AggregateRoot> Aggregate<T> build(Class<T> aggregateRootClass) {
-    this.currentAggregateRoot = null;
     this.currentAggregate = Aggregate.of(); // of()标记isBuiltWithoutRoot=true
     this.currentAggregate.createSnapshot(); // 快照同步标记
     log.debug(
@@ -33,7 +32,7 @@ public class AggregateTracker {
 
   @SuppressWarnings("unchecked")
   public <T extends AggregateRoot> Aggregate<T> build(T root) {
-    this.currentAggregateRoot = root;
+
     this.currentAggregate = Aggregate.of(root); // of(root)标记isBuiltWithoutRoot=false
     this.currentAggregate.createSnapshot();
     log.debug(
@@ -88,23 +87,16 @@ public class AggregateTracker {
     return changes;
   }
 
+  @SuppressWarnings("unchecked")
+  public <T extends AggregateRoot> T getCurrentAggregateRoot() {
+    return (T) this.currentAggregate.getRoot();
+  }
+
   private boolean isAggregateRootMarkedAsDeleted(AggregateRoot root) {
     if (root == null) {
       return false;
     }
     return root.isDeleted();
-  }
-
-  /** 辅助：递归获取类（含父类）的字段 */
-  private Field getDeclaredField(Class<?> clazz, String fieldName) {
-    while (clazz != null && clazz != Object.class) {
-      try {
-        return clazz.getDeclaredField(fieldName);
-      } catch (NoSuchFieldException e) {
-        clazz = clazz.getSuperclass();
-      }
-    }
-    return null;
   }
 
   /** 辅助：清空新增/修改列表，避免删除时存在冲突的增改操作 */
@@ -137,7 +129,6 @@ public class AggregateTracker {
     compareChildEntitiesChanges(changes);
   }
 
-  /** 带参build初始化 → 原有修改逻辑 + 主实体同步到changeMap的updateList */
   private void handleBuiltWithRootChanges(AggregateChanges changes) {
     AggregateRoot root = currentAggregate.getRoot();
     if (root != null) {
@@ -153,13 +144,8 @@ public class AggregateTracker {
             root.getClass().getSimpleName(),
             root.getId());
       }
-      // 场景2：主实体无修改 → 也放入changeMap（可选，根据你的业务决定是否保留）
-      // else {
-      //     changes.addInsertEntity(root); // 无修改时也放入，保证key存在
-      // }
     }
 
-    // 2. 子实体对比逻辑（不变）
     compareChildEntitiesChanges(changes);
   }
 
@@ -236,11 +222,5 @@ public class AggregateTracker {
   private String buildEntityKey(BaseDomainEntity entity) {
     Long entityId = ReflectUtils.getIdValue(entity);
     return entity.getClass().getName() + "_" + (entityId == null ? "NEW" : entityId);
-  }
-
-  // 同步聚合容器到tracker
-  public void setCurrentAggregate(Aggregate<? extends AggregateRoot> currentAggregate) {
-    this.currentAggregate = currentAggregate;
-    this.currentAggregateRoot = currentAggregate.getRoot();
   }
 }

@@ -12,11 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AggregateChanges {
   private Long aggregateRootId;
   private Long aggregateVersion;
-
-  /** 聚合根变更实体 */
   private AggregateRoot aggregateRootChange;
-
-  /** 聚合根变更类型：INSERT（新增）/ UPDATE（修改） */
   private String aggregateRootChangeType;
 
   private Map<Class<?>, EntityChanges<BaseDomainEntity>> entityChangesMap = new HashMap<>();

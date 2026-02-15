@@ -2,7 +2,6 @@ package com.demo.dddspringbootmybatispuls.common.aggregate;
 
 import java.lang.reflect.Field;
 
-/** 通用反射工具类（解决ID字段NoSuchFieldException） */
 public class ReflectUtils {
 
   /**
@@ -74,7 +73,6 @@ public class ReflectUtils {
     throw new RuntimeException("未找到可设置的ID字段！对象类型：" + obj.getClass().getName());
   }
 
-  /** 递归查找字段（包括父类） */
   private static Field findField(Class<?> clazz, String fieldName) {
     while (clazz != null && clazz != Object.class) {
       try {

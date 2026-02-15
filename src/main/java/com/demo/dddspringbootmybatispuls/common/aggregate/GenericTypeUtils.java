@@ -23,7 +23,7 @@ abstract class GenericTypeUtils implements ApplicationContextAware {
     // 2. 遍历匹配泛型
     for (BaseMapper<?> mapper : mapperMap.values()) {
       Class<?> mapperClass = mapper.getClass();
-      Class<?> genericType = getMapperGenericType(mapperClass, BaseMapper.class);
+      Class<?> genericType = getMapperGenericType(mapperClass);
       if (genericType != null && genericType.equals(doClass)) {
         return (BaseMapper<T>) mapper;
       }
@@ -39,11 +39,10 @@ abstract class GenericTypeUtils implements ApplicationContextAware {
             doClass.getName(), doClass.getSimpleName()));
   }
 
-  private static Class<?> getMapperGenericType(Class<?> mapperClass, Class<?> baseInterface) {
-    // 获取动态代理类的原始接口
+  private static Class<?> getMapperGenericType(Class<?> mapperClass) {
     Class<?>[] interfaces = ClassUtils.getAllInterfacesForClass(mapperClass);
     for (Class<?> iface : interfaces) {
-      if (baseInterface.isAssignableFrom(iface) && iface.getGenericInterfaces().length > 0) {
+      if (BaseMapper.class.isAssignableFrom(iface) && iface.getGenericInterfaces().length > 0) {
         // 解析BaseMapper<T>中的T类型
         return (Class<?>)
             ((java.lang.reflect.ParameterizedType) iface.getGenericInterfaces()[0])
