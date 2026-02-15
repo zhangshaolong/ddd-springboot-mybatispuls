@@ -16,7 +16,6 @@ public class Aggregate<T extends AggregateRoot> {
   private List<BaseDomainEntity> childEntities = new ArrayList<>();
   private Aggregate<T> snapshot;
 
-  /** 核心标记：是否通过无参build初始化（决定主实体是否为新建） */
   private boolean isBuiltWithoutRoot = false;
 
   private ConcurrentHashMap<String, BaseDomainEntity> deletedChildEntities =
@@ -26,14 +25,13 @@ public class Aggregate<T extends AggregateRoot> {
   /** 无参初始化（build(Class<T>)调用）→ 标记isBuiltWithoutRoot=true */
   public static <T extends AggregateRoot> Aggregate<T> of() {
     Aggregate<T> aggregate = new Aggregate<>();
-    aggregate.setBuiltWithoutRoot(true); // 无参初始化标记
+    aggregate.setBuiltWithoutRoot(true);
     return aggregate;
   }
 
-  /** 带参初始化（build(T root)调用）→ 标记isBuiltWithoutRoot=false */
   public static <T extends AggregateRoot> Aggregate<T> of(T root) {
     Aggregate<T> aggregate = new Aggregate<>(root);
-    aggregate.setBuiltWithoutRoot(false); // 带参初始化标记
+    aggregate.setBuiltWithoutRoot(false);
     return aggregate;
   }
 
@@ -61,7 +59,6 @@ public class Aggregate<T extends AggregateRoot> {
         this.isBuiltWithoutRoot);
   }
 
-  // ========== 其他方法（不变，仅修改快照创建逻辑） ==========
   public void createSnapshot() {
     if (root == null) {
       Aggregate<T> snapshotAggregate = new Aggregate<>();

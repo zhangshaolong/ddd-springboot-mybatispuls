@@ -18,8 +18,6 @@ import org.springframework.stereotype.Service;
 public class OrderCommandService {
   @Resource private AggregateTracker aggregateTracker;
   @Resource private AggregatePersistenceManager aggregatePersistenceManager;
-
-  /** 实体→DO映射（可配置到配置文件） */
   private static final Map<Class<?>, Class<?>> entityDOMapping;
 
   static {
@@ -49,7 +47,7 @@ public class OrderCommandService {
     payment.setPayType("ALIPAY");
     order.setPayment(payment);
     order.getItems().add(item1);
-    Aggregate<Order> aggregate = aggregateTracker.build(order);
+
     //    aggregate.setRoot(order);
     payment.setAmount(new java.math.BigDecimal("20011.00"));
     order.setOrderNo("abc");
@@ -70,7 +68,7 @@ public class OrderCommandService {
     item2.setOrderId(1L);
     item2.setSkuCode("SKU_002");
     item2.setQuantity(3);
-    aggregate.getRoot().getItems().add(item2);
+    order.getItems().add(item2);
 
     // 删除原有订单项
     //    aggregate.getRoot().getItems().remove(item1);
@@ -82,9 +80,13 @@ public class OrderCommandService {
     // 4. 对比变更
     //    AggregateChanges changes = aggregateTracker.compareChanges();
     // 5. 持久化所有变更
-    aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, true);
+    Aggregate<Order> aggregate = aggregateTracker.build(Order.class);
+    boolean hasChanged =
+        aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, true);
 
+    if (hasChanged) {
+      System.out.println("📌 聚合根最新版本：" + aggregateTracker.getCurrentAggregateRoot().getVersion());
+    }
     System.out.println("✅ 聚合根变更持久化完成！");
-    System.out.println("📌 聚合根最新版本：" + aggregateTracker.getCurrentAggregateRoot().getVersion());
   }
 }

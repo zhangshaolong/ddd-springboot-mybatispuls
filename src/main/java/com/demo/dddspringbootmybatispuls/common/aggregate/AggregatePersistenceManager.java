@@ -17,12 +17,12 @@ public class AggregatePersistenceManager {
   @Resource private ApplicationContext applicationContext;
 
   @SuppressWarnings({"rawtypes"})
-  public void persist(
+  public boolean persist(
       AggregateTracker aggregateTracker, Map<Class<?>, Class<?>> entityDoMapping, boolean debug) {
     AggregateChanges changes = aggregateTracker.compareChanges();
     if (!changes.hasAnyChanges()) {
       log.info("无变更需要持久化");
-      return;
+      return false;
     }
 
     // ========== 核心修改：有变更则自增聚合根version ==========
@@ -65,10 +65,12 @@ public class AggregatePersistenceManager {
     }
 
     log.info("聚合变更持久化完成");
+    return true;
   }
 
-  public void persist(AggregateTracker aggregateTracker, Map<Class<?>, Class<?>> entityDoMapping) {
-    persist(aggregateTracker, entityDoMapping, false);
+  public boolean persist(
+      AggregateTracker aggregateTracker, Map<Class<?>, Class<?>> entityDoMapping) {
+    return persist(aggregateTracker, entityDoMapping, false);
   }
 
   // ========== 新增：聚合根version操作核心方法 ==========

@@ -17,7 +17,6 @@ public class AggregateTracker {
   private AggregateRoot currentAggregateRoot;
   private Aggregate<? extends AggregateRoot> currentAggregate;
 
-  // ========== 无参build（核心：标记为新建聚合） ==========
   @SuppressWarnings("unchecked")
   public <T extends AggregateRoot> Aggregate<T> build(Class<T> aggregateRootClass) {
     this.currentAggregateRoot = null;
@@ -34,11 +33,11 @@ public class AggregateTracker {
     return build(AggregateRoot.class);
   }
 
-  // ========== 带参build（原有逻辑） ==========
+  @SuppressWarnings("unchecked")
   public <T extends AggregateRoot> Aggregate<T> build(T root) {
     this.currentAggregateRoot = root;
     this.currentAggregate = Aggregate.of(root); // of(root)标记isBuiltWithoutRoot=false
-    ((Aggregate<T>) this.currentAggregate).createSnapshot();
+    this.currentAggregate.createSnapshot();
     log.debug(
         "带参build()执行完成：初始化{}类型容器（非新建），无参标记：{}",
         root.getClass().getSimpleName(),
@@ -46,7 +45,6 @@ public class AggregateTracker {
     return (Aggregate<T>) this.currentAggregate;
   }
 
-  // ========== 核心重构：对比逻辑（基于初始化方式判定） ==========
   public AggregateChanges compareChanges() {
     AggregateChanges changes = new AggregateChanges();
     if (currentAggregate == null || !currentAggregate.hasSnapshot()) {
