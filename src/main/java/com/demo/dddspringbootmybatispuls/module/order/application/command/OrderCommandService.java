@@ -61,14 +61,18 @@ public class OrderCommandService {
 
     // 3. 模拟业务修改
     //    order.setStatus("PAID122"); // 修改订单状态
-
+    Aggregate<Order> aggregate = aggregateTracker.build(Order.class);
     // 新增订单项
-    OrderItem item2 = new OrderItem();
-    item2.setId(222L);
-    item2.setOrderId(1L);
-    item2.setSkuCode("SKU_002");
-    item2.setQuantity(3);
-    order.getItems().add(item2);
+    //    OrderItem item2 = new OrderItem();
+    //    item2.setId(222L);
+    //    item2.setOrderId(1L);
+    //    item2.setSkuCode("SKU_002");
+    //    item2.setQuantity(3);
+    //    order.getItems().add(item2);
+    order.getPayment().setPayType("ccc");
+
+    aggregate.setRoot(order);
+    //    order.setStatus("ppp");
 
     // 删除原有订单项
     //    aggregate.getRoot().getItems().remove(item1);
@@ -80,7 +84,9 @@ public class OrderCommandService {
     // 4. 对比变更
     //    AggregateChanges changes = aggregateTracker.compareChanges();
     // 5. 持久化所有变更
-    Aggregate<Order> aggregate = aggregateTracker.build(Order.class);
+
+    //    aggregate.getRoot().markAsDeleted();
+    //    order.setOrderNo("ddf");
     boolean hasChanged =
         aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, true);
 

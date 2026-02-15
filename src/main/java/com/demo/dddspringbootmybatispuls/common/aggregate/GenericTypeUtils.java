@@ -2,23 +2,14 @@ package com.demo.dddspringbootmybatispuls.common.aggregate;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import java.util.Map;
-import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 
 @Component
-public class GenericTypeUtils implements ApplicationContextAware {
-  // 保留静态上下文（备用）
-  private static ApplicationContext defaultContext;
+abstract class GenericTypeUtils implements ApplicationContextAware {
 
-  @Override
-  public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-    GenericTypeUtils.defaultContext = applicationContext;
-  }
-
-  // ========== 核心：新增双参数方法（匹配你的调用语法） ==========
   @SuppressWarnings("unchecked")
   public static <T> BaseMapper<T> getMapperByDoType(
       ApplicationContext applicationContext, Class<T> doClass) {
@@ -48,15 +39,6 @@ public class GenericTypeUtils implements ApplicationContextAware {
             doClass.getName(), doClass.getSimpleName()));
   }
 
-  // ========== 单参数重载方法（备用） ==========
-  public static <T> BaseMapper<T> getMapperByDoType(Class<T> doClass) {
-    if (defaultContext == null) {
-      throw new RuntimeException("ApplicationContext未初始化，请确保工具类被Spring管理");
-    }
-    return getMapperByDoType(defaultContext, doClass);
-  }
-
-  // ========== 辅助方法：解析泛型 ==========
   private static Class<?> getMapperGenericType(Class<?> mapperClass, Class<?> baseInterface) {
     // 获取动态代理类的原始接口
     Class<?>[] interfaces = ClassUtils.getAllInterfacesForClass(mapperClass);

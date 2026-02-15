@@ -4,13 +4,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Getter
-@Setter
+@Data
 public class AggregateChanges {
   private Long aggregateRootId;
   private Long aggregateVersion;
@@ -23,7 +21,6 @@ public class AggregateChanges {
 
   private Map<Class<?>, EntityChanges<BaseDomainEntity>> entityChangesMap = new HashMap<>();
 
-  // ========== 核心新增：聚合根新增方法 ==========
   public void addAggregateRootInsert(AggregateRoot root) {
     this.aggregateRootChange = root;
     this.aggregateRootChangeType = "INSERT";
@@ -36,17 +33,14 @@ public class AggregateChanges {
     log.debug("新增聚合根修改记录：{}，ID：{}", root.getClass().getSimpleName(), root.getId());
   }
 
-  /** 判断聚合根是否为新增 */
   public boolean isAggregateRootInsert() {
     return this.aggregateRootChange != null && "INSERT".equals(this.aggregateRootChangeType);
   }
 
-  /** 判断聚合根是否为修改 */
   public boolean isAggregateRootUpdate() {
     return this.aggregateRootChange != null && "UPDATE".equals(this.aggregateRootChangeType);
   }
 
-  /** 判断是否有任何变更（包含新增/修改/删除） */
   public boolean hasAnyChanges() {
     // 聚合根有新增/修改
     if (isAggregateRootInsert() || isAggregateRootUpdate()) {
@@ -61,15 +55,13 @@ public class AggregateChanges {
     return false;
   }
 
-  // ========== 子实体变更方法（不变） ==========
   public void addInsertEntity(BaseDomainEntity entity) {
     if (entity == null) {
       log.warn("尝试添加空的子实体，忽略");
       return;
     }
-    // 核心修复：用entity的实际类型作为Key，而非泛型推断
     Class<?> actualClass = entity.getClass();
-    EntityChanges entityChanges = getOrCreateEntityChanges(actualClass);
+    EntityChanges<BaseDomainEntity> entityChanges = getOrCreateEntityChanges(actualClass);
     entityChanges.getInsertList().add(entity);
     log.debug(
         "新增子实体变更记录：{}，ID：{}，Key类型：{}",
@@ -116,9 +108,7 @@ public class AggregateChanges {
     return entityChanges;
   }
 
-  // ========== 内部类（不变） ==========
-  @Getter
-  @Setter
+  @Data
   public static class EntityChanges<T extends BaseDomainEntity> {
     private List<BaseDomainEntity> insertList = new CopyOnWriteArrayList<>();
     private List<BaseDomainEntity> updateList = new CopyOnWriteArrayList<>();

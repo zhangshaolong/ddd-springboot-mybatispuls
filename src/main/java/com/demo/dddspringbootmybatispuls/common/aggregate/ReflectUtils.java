@@ -16,7 +16,6 @@ public class ReflectUtils {
       return null;
     }
 
-    // 支持的ID字段名（可根据项目扩展）
     String[] idFieldNames = {"id", "Id", "ID", "entityId", "entity_id"};
 
     for (String fieldName : idFieldNames) {

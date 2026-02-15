@@ -4,13 +4,11 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Getter
-@Setter
+@Data
 public class Aggregate<T extends AggregateRoot> {
   private T root;
   private List<BaseDomainEntity> childEntities = new ArrayList<>();
@@ -21,8 +19,6 @@ public class Aggregate<T extends AggregateRoot> {
   private ConcurrentHashMap<String, BaseDomainEntity> deletedChildEntities =
       new ConcurrentHashMap<>();
 
-  // ========== 工厂方法（标记初始化方式） ==========
-  /** 无参初始化（build(Class<T>)调用）→ 标记isBuiltWithoutRoot=true */
   public static <T extends AggregateRoot> Aggregate<T> of() {
     Aggregate<T> aggregate = new Aggregate<>();
     aggregate.setBuiltWithoutRoot(true);
@@ -37,12 +33,12 @@ public class Aggregate<T extends AggregateRoot> {
 
   // ========== 构造方法 ==========
   private Aggregate() {
-    this.isBuiltWithoutRoot = true; // 空构造默认无参初始化
+    this.isBuiltWithoutRoot = true;
   }
 
   private Aggregate(T root) {
     this.root = root;
-    this.isBuiltWithoutRoot = false; // 带参构造标记
+    this.isBuiltWithoutRoot = false;
     collectChildEntitiesByReflection();
   }
 
@@ -83,7 +79,6 @@ public class Aggregate<T extends AggregateRoot> {
     }
   }
 
-  // 以下方法（syncChildEntities/addChildEntity/markChildEntityDeleted等）保持不变
   public void syncChildEntities() {
     if (root == null) {
       log.warn("聚合根为空，无法同步子实体");
@@ -126,7 +121,7 @@ public class Aggregate<T extends AggregateRoot> {
   public void addChildEntity(BaseDomainEntity childEntity) {
     if (childEntity == null) return;
     String entityKey = buildEntityKey(childEntity);
-    if (!childEntities.stream().anyMatch(e -> buildEntityKey(e).equals(entityKey))) {
+    if (childEntities.stream().noneMatch(e -> buildEntityKey(e).equals(entityKey))) {
       childEntities.add(childEntity);
     }
   }

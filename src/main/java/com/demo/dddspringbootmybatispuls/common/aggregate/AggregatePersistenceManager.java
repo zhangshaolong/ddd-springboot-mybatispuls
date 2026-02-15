@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-/** 聚合持久化管理器（最终版：无业务硬编码、纯类型分析找Mapper） */
 @Slf4j
 @Component
 public class AggregatePersistenceManager {
@@ -25,17 +24,14 @@ public class AggregatePersistenceManager {
       return false;
     }
 
-    // ========== 核心修改：有变更则自增聚合根version ==========
-    // 1. 获取聚合根实体
-
     AggregateRoot aggregateRoot = aggregateTracker.getCurrentAggregateRoot();
     if (aggregateRoot == null) {
       throw new RuntimeException("聚合根实体不能为空，无法更新版本号");
     }
-    // 2. 自增聚合根version
+
     incrementAggregateRootVersion(aggregateRoot);
     log.info("聚合根版本号已自增，当前版本：{}", aggregateRoot.getVersion());
-    // 3. 确保聚合根被加入更新列表（保证version变更被持久化）
+
     ensureAggregateRootInUpdateList(changes, aggregateRoot);
 
     for (Map.Entry<Class<?>, AggregateChanges.EntityChanges<BaseDomainEntity>> entry :
@@ -43,16 +39,13 @@ public class AggregatePersistenceManager {
       Class<?> entityClass = entry.getKey();
       AggregateChanges.EntityChanges<?> entityChanges = entry.getValue();
 
-      // 1. 获取DO类型
       Class<?> doClass = entityDoMapping.get(entityClass);
       if (doClass == null) {
         throw new RuntimeException("未配置实体[" + entityClass.getName() + "]的DO映射关系");
       }
 
-      // 2. 动态获取BaseMapper（纯类型分析）
       BaseMapper doMapper = GenericTypeUtils.getMapperByDoType(applicationContext, doClass);
 
-      // 3. 处理增删改
       if (!entityChanges.getInsertList().isEmpty()) {
         handleInsert(entityClass, doClass, doMapper, entityChanges.getInsertList(), debug);
       }
@@ -118,8 +111,6 @@ public class AggregatePersistenceManager {
     }
   }
 
-  // ======================================================
-
   @SuppressWarnings({"rawtypes", "unchecked"})
   private void handleInsert(
       Class<?> entityClass,
@@ -166,7 +157,6 @@ public class AggregatePersistenceManager {
     }
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
   private void handleDelete(
       Class<?> entityClass,
       Class<?> doClass,

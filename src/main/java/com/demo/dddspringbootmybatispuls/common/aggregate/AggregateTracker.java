@@ -4,15 +4,13 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@Getter
-@Setter
+@Data
 public class AggregateTracker {
   private AggregateRoot currentAggregateRoot;
   private Aggregate<? extends AggregateRoot> currentAggregate;
