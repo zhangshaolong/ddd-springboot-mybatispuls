@@ -51,12 +51,31 @@ public class AggregateTracker {
       log.warn("无聚合快照，无法对比变更");
       return changes;
     }
-
     currentAggregate.syncChildEntities();
     AggregateRoot root = currentAggregate.getRoot();
     if (root != null) {
       changes.setAggregateRootId(ReflectUtils.getIdValue(root));
       changes.setAggregateVersion(root.getVersion());
+
+      // ========== 核心新增：优先判断主实体是否标记删除 ==========
+      if (isAggregateRootMarkedAsDeleted(root)) {
+        log.info(
+            "主实体[{}:{}]已标记删除，将主实体+所有子实体放入删除列表",
+            root.getClass().getSimpleName(),
+            ReflectUtils.getIdValue(root));
+        // 1. 主实体加入删除列表
+        changes.addDeleteEntity(root);
+        // 2. 所有子实体加入删除列表
+        List<BaseDomainEntity> allChildren = currentAggregate.getChildEntities();
+        for (BaseDomainEntity child : allChildren) {
+          changes.addDeleteEntity(child);
+          log.debug(
+              "子实体[{}:{}]加入删除列表", child.getClass().getSimpleName(), ReflectUtils.getIdValue(child));
+        }
+        // 3. 清空新增/修改列表（避免冲突）
+        clearInsertAndUpdateList(changes);
+        return changes; // 直接返回删除变更，不走后续逻辑
+      }
     }
 
     // 核心判定：仅根据isBuiltWithoutRoot判断是否新建（完全移除ID判断）
@@ -69,6 +88,39 @@ public class AggregateTracker {
     }
 
     return changes;
+  }
+
+  private boolean isAggregateRootMarkedAsDeleted(AggregateRoot root) {
+    if (root == null) {
+      return false;
+    }
+    return root.isDeleted();
+  }
+
+  /** 辅助：递归获取类（含父类）的字段 */
+  private Field getDeclaredField(Class<?> clazz, String fieldName) {
+    while (clazz != null && clazz != Object.class) {
+      try {
+        return clazz.getDeclaredField(fieldName);
+      } catch (NoSuchFieldException e) {
+        clazz = clazz.getSuperclass();
+      }
+    }
+    return null;
+  }
+
+  /** 辅助：清空新增/修改列表，避免删除时存在冲突的增改操作 */
+  private void clearInsertAndUpdateList(AggregateChanges changes) {
+    // 需根据AggregateChanges的实际结构实现，核心是清空insert/update列表
+    // 以下是适配常见结构的示例（如果你的AggregateChanges有其他结构，调整对应方法）
+    if (changes.getEntityChangesMap() != null) {
+      for (AggregateChanges.EntityChanges<?> entityChanges :
+          changes.getEntityChangesMap().values()) {
+        entityChanges.getInsertList().clear();
+        entityChanges.getUpdateList().clear();
+        log.debug("清空实体的新增/修改列表，仅保留删除列表");
+      }
+    }
   }
 
   /** 无参build初始化 → 主实体强制新增，子实体按快照对比 */
@@ -165,7 +217,7 @@ public class AggregateTracker {
       for (Field field : fields) {
         if (field.getName().equals("id")
             || field.getName().equals("version")
-            || field.getName().equals("deleted")) {
+            || field.getName().equals("deleted")) { // 仍跳过deleted字段的变更对比
           continue;
         }
         try {
