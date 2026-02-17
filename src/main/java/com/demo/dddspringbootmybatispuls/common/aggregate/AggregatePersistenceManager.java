@@ -72,7 +72,8 @@ public class AggregatePersistenceManager {
    * @param changes 聚合变更对象
    * @param aggregateRoot 聚合根实体
    */
-  private void ensureAggregateRootInUpdateList(AggregateChanges changes, Object aggregateRoot) {
+  private void ensureAggregateRootInUpdateList(
+      AggregateChanges changes, BaseDomainEntity aggregateRoot) {
     Class<?> aggregateRootClass = aggregateRoot.getClass();
     // 获取聚合根对应的EntityChanges
     AggregateChanges.EntityChanges<BaseDomainEntity> entityChanges =
@@ -87,7 +88,7 @@ public class AggregatePersistenceManager {
     List<BaseDomainEntity> updateList = entityChanges.getUpdateList();
     // 如果聚合根不在更新列表中，添加进去
     if (!updateList.contains(aggregateRoot)) {
-      updateList.add((BaseDomainEntity) aggregateRoot);
+      updateList.add(aggregateRoot);
       log.debug("聚合根已加入更新列表，确保version变更被持久化");
     }
   }

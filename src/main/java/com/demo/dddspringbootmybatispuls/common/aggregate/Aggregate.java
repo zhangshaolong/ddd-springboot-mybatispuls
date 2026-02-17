@@ -31,7 +31,6 @@ public class Aggregate<T extends AggregateRoot> {
     return aggregate;
   }
 
-  // ========== 构造方法 ==========
   private Aggregate() {
     this.isBuiltWithoutRoot = true;
   }
@@ -42,10 +41,8 @@ public class Aggregate<T extends AggregateRoot> {
     collectChildEntitiesByReflection();
   }
 
-  // ========== 重写setRoot（保留初始化方式标记） ==========
   public void setRoot(T root) {
     this.root = root;
-    // 保留初始化方式标记（关键：不因为setRoot改变）
     this.childEntities.clear();
     collectChildEntitiesByReflection();
     log.debug(
@@ -55,6 +52,7 @@ public class Aggregate<T extends AggregateRoot> {
         this.isBuiltWithoutRoot);
   }
 
+  @SuppressWarnings("unchecked")
   public void createSnapshot() {
     if (root == null) {
       Aggregate<T> snapshotAggregate = new Aggregate<>();
@@ -126,43 +124,12 @@ public class Aggregate<T extends AggregateRoot> {
     }
   }
 
-  public void markChildEntityDeleted(BaseDomainEntity childEntity) {
-    if (childEntity == null) return;
-    String entityKey = buildEntityKey(childEntity);
-    deletedChildEntities.put(entityKey, childEntity);
-    childEntities.removeIf(e -> buildEntityKey(e).equals(entityKey));
-  }
-
   private String buildEntityKey(BaseDomainEntity entity) {
     Long entityId = ReflectUtils.getIdValue(entity);
     return entity.getClass().getName() + "_" + (entityId == null ? "NEW" : entityId);
   }
 
-  public List<BaseDomainEntity> getAllEntities() {
-    List<BaseDomainEntity> allEntities = new ArrayList<>();
-    if (root != null) allEntities.add(root);
-    allEntities.addAll(childEntities);
-    return allEntities;
-  }
-
   public boolean hasSnapshot() {
     return this.snapshot != null;
-  }
-
-  public void clearSnapshot() {
-    this.snapshot = null;
-    this.deletedChildEntities.clear();
-  }
-
-  public boolean hasChanges() {
-    if (!hasSnapshot()) return false;
-    if (getAllEntities().size() != snapshot.getAllEntities().size()) return true;
-    for (BaseDomainEntity entity : getAllEntities()) {
-      String entityKey = buildEntityKey(entity);
-      boolean existsInSnapshot =
-          snapshot.getAllEntities().stream().anyMatch(s -> buildEntityKey(s).equals(entityKey));
-      if (!existsInSnapshot) return true;
-    }
-    return false;
   }
 }

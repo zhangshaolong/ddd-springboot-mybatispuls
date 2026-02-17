@@ -88,7 +88,7 @@ public class OrderCommandService {
     //    aggregate.getRoot().markAsDeleted();
     //    order.setOrderNo("ddf");
     boolean hasChanged =
-        aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, true);
+        aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, false);
 
     if (hasChanged) {
       System.out.println("📌 聚合根最新版本：" + aggregateTracker.getCurrentAggregateRoot().getVersion());

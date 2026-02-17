@@ -1,16 +1,16 @@
 package com.demo.dddspringbootmybatispuls.module.order.infrastructure.dataobject;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.demo.dddspringbootmybatispuls.common.aggregate.BaseDO;
+import java.io.Serial;
 import java.io.Serializable;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @TableName("t_order_payment")
-public class OrderPaymentDO extends BaseDO implements Serializable {
-  private static final long serialVersionUID = 1L;
+public class OrderPaymentDO implements Serializable {
+  @Serial private static final long serialVersionUID = 1L;
+
+  private Long id;
 
   /** 关联订单ID（对应Order的id） */
   private Long orderId;
