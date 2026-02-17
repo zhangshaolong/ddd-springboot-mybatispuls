@@ -9,14 +9,13 @@ import java.util.function.Function;
  *
  * @author zhangshaolong
  */
-public final class MappingRule<S, T> {
-  private final String sourceField;
-  private final String targetField;
-  private final boolean ignore;
-  private final BiFunction<Object, S, Object> converter;
-  private final BiConsumer<S, T> globalHandler;
-
-  private MappingRule(
+public record MappingRule<S, T>(
+    String sourceField,
+    String targetField,
+    boolean ignore,
+    BiFunction<Object, S, Object> converter,
+    BiConsumer<S, T> globalHandler) {
+  public MappingRule(
       String sourceField,
       String targetField,
       boolean ignore,
@@ -107,26 +106,6 @@ public final class MappingRule<S, T> {
     } else if (converter != null && sourceField == null) {
       throw new IllegalArgumentException("自定义转换规则的源字段名不能为空");
     }
-  }
-
-  public String getSourceField() {
-    return sourceField;
-  }
-
-  public String getTargetField() {
-    return targetField;
-  }
-
-  public boolean isIgnore() {
-    return ignore;
-  }
-
-  public BiFunction<Object, S, Object> getConverter() {
-    return converter;
-  }
-
-  public BiConsumer<S, T> getGlobalHandler() {
-    return globalHandler;
   }
 
   public boolean isGlobalRule() {

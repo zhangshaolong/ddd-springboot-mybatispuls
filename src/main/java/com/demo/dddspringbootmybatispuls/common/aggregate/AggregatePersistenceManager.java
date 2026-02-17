@@ -29,7 +29,7 @@ public class AggregatePersistenceManager {
       throw new RuntimeException("聚合根实体不能为空，无法更新版本号");
     }
 
-    incrementAggregateRootVersion(aggregateRoot);
+    aggregateRoot.autoIncrementVersion();
     log.info("聚合根版本号已自增，当前版本：{}", aggregateRoot.getVersion());
 
     ensureAggregateRootInUpdateList(changes, aggregateRoot);
@@ -64,25 +64,6 @@ public class AggregatePersistenceManager {
   public boolean persist(
       AggregateTracker aggregateTracker, Map<Class<?>, Class<?>> entityDoMapping) {
     return persist(aggregateTracker, entityDoMapping, false);
-  }
-
-  // ========== 新增：聚合根version操作核心方法 ==========
-  /**
-   * 自增聚合根的version字段
-   *
-   * @param aggregateRoot 聚合根实体
-   */
-  private void incrementAggregateRootVersion(AggregateRoot aggregateRoot) {
-    try {
-      // 获取当前version
-      Long currentVersion = aggregateRoot.getVersion();
-      // 空版本号默认从0开始自增
-      Long newVersion = currentVersion == null ? 1L : currentVersion + 1;
-      // 设置新的version
-      aggregateRoot.setVersion(newVersion);
-    } catch (Exception e) {
-      throw new RuntimeException("聚合根版本号自增失败，请确保实体包含Long类型的version字段", e);
-    }
   }
 
   /**

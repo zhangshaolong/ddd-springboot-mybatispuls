@@ -1,6 +1,7 @@
 package com.demo.dddspringbootmybatispuls.common.aggregate;
 
 import java.io.Serial;
+import java.util.Objects;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -21,10 +22,11 @@ public abstract class AggregateRoot extends BaseDomainEntity {
     return this.deleted == 1;
   }
 
-  public boolean isDeletedStatusChanged(BaseDomainEntity snapshot) {
-    if (!(snapshot instanceof AggregateRoot snapshotRoot)) {
-      return false;
-    }
-    return snapshotRoot.getDeleted() == 0 && this.isDeleted();
+  public boolean isValidVersion(Long version) {
+    return Objects.equals(version, this.version);
+  }
+
+  public void autoIncrementVersion() {
+    this.version++;
   }
 }

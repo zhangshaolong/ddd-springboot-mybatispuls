@@ -115,18 +115,21 @@ public class AggregateChanges {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends BaseDomainEntity> List<T> getInsertList(Class<T> clazz) {
-      return (List<T>) insertList.stream().filter(clazz::isInstance).toList();
+    public <DomainEntity extends BaseDomainEntity> List<DomainEntity> getInsertList(
+        Class<DomainEntity> clazz) {
+      return (List<DomainEntity>) insertList.stream().filter(clazz::isInstance).toList();
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends BaseDomainEntity> List<T> getUpdateList(Class<T> clazz) {
-      return (List<T>) updateList.stream().filter(clazz::isInstance).toList();
+    public <DomainEntity extends BaseDomainEntity> List<DomainEntity> getUpdateList(
+        Class<DomainEntity> clazz) {
+      return (List<DomainEntity>) updateList.stream().filter(clazz::isInstance).toList();
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends BaseDomainEntity> List<T> getDeleteList(Class<T> clazz) {
-      return (List<T>) deleteList.stream().filter(clazz::isInstance).toList();
+    public <DomainEntity extends BaseDomainEntity> List<DomainEntity> getDeleteList(
+        Class<DomainEntity> clazz) {
+      return (List<DomainEntity>) deleteList.stream().filter(clazz::isInstance).toList();
     }
   }
 }

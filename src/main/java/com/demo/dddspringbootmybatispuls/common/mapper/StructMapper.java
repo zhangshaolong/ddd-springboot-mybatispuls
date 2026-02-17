@@ -124,11 +124,11 @@ public final class StructMapper {
 
     // 3. 移除被忽略的字段（置null）
     rules.stream()
-        .filter(MappingRule::isIgnore)
+        .filter(MappingRule::ignore)
         .forEach(
             rule -> {
               try {
-                Field targetField = getCachedField(targetClass, rule.getTargetField());
+                Field targetField = getCachedField(targetClass, rule.targetField());
                 targetField.setAccessible(true);
                 Object defaultValue = getDefaultValue(targetField.getType());
                 targetField.set(target, defaultValue);
@@ -163,39 +163,36 @@ public final class StructMapper {
     Class<T> targetClass = (Class<T>) target.getClass();
 
     for (MappingRule<S, T> rule : rules) {
-      if (rule.isIgnore()) {
+      if (rule.ignore()) {
         continue;
       }
 
       if (rule.isGlobalRule()) {
-        rule.getGlobalHandler().accept(source, target);
+        rule.globalHandler().accept(source, target);
         continue;
       }
 
       try {
         // 1. 获取源字段值
-        Field sourceField = getCachedField(sourceClass, rule.getSourceField());
+        Field sourceField = getCachedField(sourceClass, rule.sourceField());
         sourceField.setAccessible(true);
         Object fieldValue = sourceField.get(source);
 
         // 2. 应用自定义转换器
-        if (rule.getConverter() != null) {
-          fieldValue = rule.getConverter().apply(fieldValue, source);
+        if (rule.converter() != null) {
+          fieldValue = rule.converter().apply(fieldValue, source);
         }
 
         // 3. 设置目标字段值（覆盖基础映射）
-        Field targetField = getCachedField(targetClass, rule.getTargetField());
+        Field targetField = getCachedField(targetClass, rule.targetField());
         targetField.setAccessible(true);
         targetField.set(target, fieldValue);
       } catch (NoSuchFieldException e) {
         throw new RuntimeException(
-            "映射规则错误：字段不存在 → 源字段=" + rule.getSourceField() + "，目标字段=" + rule.getTargetField(), e);
+            "映射规则错误：字段不存在 → 源字段=" + rule.sourceField() + "，目标字段=" + rule.targetField(), e);
       } catch (IllegalAccessException e) {
         throw new RuntimeException(
-            "映射规则错误：字段访问失败（可能是final字段） → 源字段="
-                + rule.getSourceField()
-                + "，目标字段="
-                + rule.getTargetField(),
+            "映射规则错误：字段访问失败（可能是final字段） → 源字段=" + rule.sourceField() + "，目标字段=" + rule.targetField(),
             e);
       }
     }

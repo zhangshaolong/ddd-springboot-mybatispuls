@@ -101,8 +101,6 @@ public class AggregateTracker {
 
   /** 辅助：清空新增/修改列表，避免删除时存在冲突的增改操作 */
   private void clearInsertAndUpdateList(AggregateChanges changes) {
-    // 需根据AggregateChanges的实际结构实现，核心是清空insert/update列表
-    // 以下是适配常见结构的示例（如果你的AggregateChanges有其他结构，调整对应方法）
     if (changes.getEntityChangesMap() != null) {
       for (AggregateChanges.EntityChanges<?> entityChanges :
           changes.getEntityChangesMap().values()) {
