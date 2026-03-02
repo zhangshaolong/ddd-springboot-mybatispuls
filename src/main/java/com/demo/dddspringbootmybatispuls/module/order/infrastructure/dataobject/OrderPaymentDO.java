@@ -20,10 +20,4 @@ public class OrderPaymentDO implements Serializable {
 
   /** 支付方式（ALIPAY/WECHAT/CASH） */
   private String payType;
-
-  /** 支付状态（UNPAID/PAYING/PAID/REFUNDED） */
-  private String payStatus;
-
-  /** 第三方支付流水号 */
-  private String outTradeNo;
 }

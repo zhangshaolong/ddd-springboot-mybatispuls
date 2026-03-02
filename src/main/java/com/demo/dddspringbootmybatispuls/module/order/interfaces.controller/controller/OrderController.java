@@ -30,9 +30,21 @@ public class OrderController {
     return Result.success(orderDTO);
   }
 
+  @GetMapping("/create")
+  public Result<?> createOrder() {
+    orderCommandService.create();
+    return Result.success();
+  }
+
   @GetMapping("/update")
   public Result<?> updateOrder() {
     orderCommandService.update();
+    return Result.success();
+  }
+
+  @GetMapping("/remove")
+  public Result<?> removeOrder() {
+    orderCommandService.remove();
     return Result.success();
   }
 }

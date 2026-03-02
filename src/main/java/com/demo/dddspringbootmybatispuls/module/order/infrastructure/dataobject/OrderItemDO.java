@@ -20,10 +20,4 @@ public class OrderItemDO implements Serializable {
 
   /** 购买数量 */
   private Integer quantity;
-
-  /** 商品单价 */
-  private java.math.BigDecimal price;
-
-  /** 小计金额（quantity * price） */
-  private java.math.BigDecimal subAmount;
 }

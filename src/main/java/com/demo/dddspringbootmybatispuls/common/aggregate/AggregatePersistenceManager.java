@@ -28,7 +28,6 @@ public class AggregatePersistenceManager {
     if (aggregateRoot == null) {
       throw new RuntimeException("聚合根实体不能为空，无法更新版本号");
     }
-
     aggregateRoot.autoIncrementVersion();
     log.info("聚合根版本号已自增，当前版本：{}", aggregateRoot.getVersion());
 

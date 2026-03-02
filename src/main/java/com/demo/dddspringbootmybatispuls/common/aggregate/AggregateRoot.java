@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 public abstract class AggregateRoot extends BaseDomainEntity {
   @Serial private static final long serialVersionUID = 1L;
 
-  private Long version = 1L;
+  private Long version = 0L;
 
   private Integer deleted = 0;
 
