@@ -1,9 +1,11 @@
 package com.demo.dddspringbootmybatispuls.common.mapper;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import org.springframework.cglib.beans.BeanCopier;
 
 /**
@@ -96,9 +98,11 @@ public final class StructMapper {
   public static <S, T> List<T> toList(
       List<S> sourceList, Class<T> targetClass, List<MappingRule<S, T>> mappingRules) {
     if (sourceList == null || sourceList.isEmpty()) {
-      return List.of();
+      return new ArrayList<>();
     }
-    return sourceList.stream().map(source -> to(source, targetClass, mappingRules)).toList();
+    return sourceList.stream()
+        .map(source -> to(source, targetClass, mappingRules))
+        .collect(Collectors.toList());
   }
 
   /** 集合转换（无动态规则） */

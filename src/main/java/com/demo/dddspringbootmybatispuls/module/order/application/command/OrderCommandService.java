@@ -89,9 +89,14 @@ public class OrderCommandService {
     aggregateTracker.build(order);
 
     // 业务做update操作
-    order.getPayment().setPayType("e1r");
-    order.setItems(List.of());
-
+    payment.setPayType("e1r");
+    orderItems.removeFirst();
+    OrderItem orderItem = new OrderItem();
+    orderItem.setId(2L);
+    orderItem.setOrderId(orderId);
+    orderItem.setSkuCode("SKU_001111");
+    orderItem.setQuantity(2001);
+    orderItems.add(orderItem);
     // 完成聚合根业务处理后，持久化操作
     boolean hasChanged =
         aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, isDebugMode);
