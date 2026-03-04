@@ -20,7 +20,7 @@ public class Aggregate<T extends AggregateRoot> {
       new ConcurrentHashMap<>();
 
   public static <T extends AggregateRoot> Aggregate<T> of() {
-    Aggregate<T> aggregate = new Aggregate<>();
+    Aggregate<T> aggregate = new Aggregate<T>();
     aggregate.setBuiltWithoutRoot(true);
     return aggregate;
   }
