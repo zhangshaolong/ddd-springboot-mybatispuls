@@ -8,8 +8,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@AutoMapper(target = AddressDTO.class)
-public class AddressEntity {
-  private String province;
-  private String city;
+@AutoMapper(target = PlusDTO.class) // 指定转换目标
+public class PlusEntity {
+  private String username;
+  private String password;
+  private String mobile;
 }

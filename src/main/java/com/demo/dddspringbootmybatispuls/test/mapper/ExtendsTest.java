@@ -1,7 +1,7 @@
 package com.demo.dddspringbootmybatispuls.test.mapper;
 
 import com.demo.dddspringbootmybatispuls.common.mapper.MappingRule;
-import com.demo.dddspringbootmybatispuls.common.mapper.StructMapper;
+import com.demo.dddspringbootmybatispuls.common.mapper.StructMapperReflect;
 import java.util.List;
 
 public class ExtendsTest {
@@ -35,10 +35,10 @@ public class ExtendsTest {
                               (addrFieldValue, addrInstance) ->
                                   addrInstance.getProvince() + "-" + addrInstance.getCity()));
                   // 2. 递归调用StructMapper.to()转换嵌套对象
-                  return StructMapper.to(
+                  return StructMapperReflect.to(
                       (AddressEntity) fieldValue, AddressDTO.class, addressRules);
                 }));
-    StudentDTO studentDTO = StructMapper.to(student, StudentDTO.class, rules);
+    StudentDTO studentDTO = StructMapperReflect.to(student, StudentDTO.class, rules);
     System.out.println("Class继承转换结果：");
     System.out.println(studentDTO);
   }

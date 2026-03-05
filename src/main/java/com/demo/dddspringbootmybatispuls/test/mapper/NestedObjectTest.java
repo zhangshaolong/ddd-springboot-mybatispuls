@@ -1,7 +1,7 @@
 package com.demo.dddspringbootmybatispuls.test.mapper;
 
 import com.demo.dddspringbootmybatispuls.common.mapper.MappingRule;
-import com.demo.dddspringbootmybatispuls.common.mapper.StructMapper;
+import com.demo.dddspringbootmybatispuls.common.mapper.StructMapperReflect;
 import java.util.List;
 
 public class NestedObjectTest {
@@ -30,12 +30,12 @@ public class NestedObjectTest {
                               (addrFieldValue, addrInstance) ->
                                   addrInstance.getProvince() + "-" + addrInstance.getCity()));
                   // 2. 递归调用StructMapper.to()转换嵌套对象
-                  return StructMapper.to(
+                  return StructMapperReflect.to(
                       (AddressEntity) fieldValue, AddressDTO.class, addressRules);
                 }));
 
     // 转换
-    UserDTO target = StructMapper.to(source, UserDTO.class, rules);
+    UserDTO target = StructMapperReflect.to(source, UserDTO.class, rules);
     System.out.println("嵌套对象转换结果：");
     System.out.println(target);
   }

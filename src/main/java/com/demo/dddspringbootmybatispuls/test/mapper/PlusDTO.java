@@ -1,6 +1,5 @@
 package com.demo.dddspringbootmybatispuls.test.mapper;
 
-import io.github.linpeilie.annotations.AutoMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,8 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@AutoMapper(target = AddressDTO.class)
-public class AddressEntity {
-  private String province;
-  private String city;
+public class PlusDTO {
+  private String username;
+  private String password;
+  private String mobile;
 }

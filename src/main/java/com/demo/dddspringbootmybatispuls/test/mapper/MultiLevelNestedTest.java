@@ -1,7 +1,7 @@
 package com.demo.dddspringbootmybatispuls.test.mapper;
 
 import com.demo.dddspringbootmybatispuls.common.mapper.MappingRule;
-import com.demo.dddspringbootmybatispuls.common.mapper.StructMapper;
+import com.demo.dddspringbootmybatispuls.common.mapper.StructMapperReflect;
 import java.util.List;
 
 public class MultiLevelNestedTest {
@@ -33,7 +33,7 @@ public class MultiLevelNestedTest {
                               "fullAddress",
                               (addrField, addrInstance) ->
                                   addrInstance.getProvince() + "-" + addrInstance.getCity()));
-                  return StructMapper.to(
+                  return StructMapperReflect.to(
                       (AddressEntity) fieldValue, AddressDTO.class, addressRules);
                 }),
             // 2. 转换订单集合
@@ -41,10 +41,10 @@ public class MultiLevelNestedTest {
                 "orders",
                 "orders",
                 (fieldValue, instance) ->
-                    StructMapper.toList((List<OrderEntity>) fieldValue, OrderDTO.class)));
+                    StructMapperReflect.toList((List<OrderEntity>) fieldValue, OrderDTO.class)));
 
     // 转换
-    UserDTO target = StructMapper.to(source, UserDTO.class, rules);
+    UserDTO target = StructMapperReflect.to(source, UserDTO.class, rules);
     System.out.println("多层嵌套+集合转换结果：");
     System.out.println(target);
   }

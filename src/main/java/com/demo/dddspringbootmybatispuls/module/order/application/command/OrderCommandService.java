@@ -14,9 +14,7 @@ import com.demo.dddspringbootmybatispuls.module.order.infrastructure.dataobject.
 import com.demo.dddspringbootmybatispuls.module.order.infrastructure.dataobject.OrderItemDO;
 import com.demo.dddspringbootmybatispuls.module.order.infrastructure.dataobject.OrderPaymentDO;
 import jakarta.annotation.Resource;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,32 +27,26 @@ public class OrderCommandService {
 
   @Resource private AggregateTracker aggregateTracker;
   @Resource private AggregatePersistenceManager aggregatePersistenceManager;
-  private static final Map<Class<?>, Class<?>> entityDOMapping;
 
-  static {
-    entityDOMapping = new HashMap<>();
-    entityDOMapping.put(Order.class, OrderDO.class);
-    entityDOMapping.put(OrderItem.class, OrderItemDO.class);
-    entityDOMapping.put(OrderPayment.class, OrderPaymentDO.class);
-  }
+  private final boolean isDebugMode = false;
 
-  private final boolean isDebugMode = true;
+  private final Long orderId = 13L;
 
   public void create() {
     // 1. 构造新建时的各个实体对象
     Order order = new Order();
-    order.setId(1L);
-    order.setOrderNo("ORDER_20260211_001");
+    order.setId(orderId);
+    order.setOrderNo("ORDER_20260211_001" + orderId);
     order.setStatus("UNPAID");
     OrderItem item1 = new OrderItem();
-    item1.setId(1L);
-    item1.setOrderId(1L);
+    item1.setId(orderId);
+    item1.setOrderId(orderId);
     item1.setSkuCode("SKU_001");
     item1.setQuantity(2);
     order.getItems().add(item1);
     OrderPayment payment = new OrderPayment();
-    payment.setId(1L);
-    payment.setOrderId(1L);
+    payment.setId(orderId);
+    payment.setOrderId(orderId);
     payment.setAmount(new java.math.BigDecimal("200.00"));
     payment.setPayType("ALIPAY");
     order.setPayment(payment);
@@ -64,8 +56,7 @@ public class OrderCommandService {
     aggregate.setRoot(order);
 
     // 持久化聚合根各实体
-    boolean hasChanged =
-        aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, isDebugMode);
+    boolean hasChanged = aggregatePersistenceManager.persist(aggregateTracker, isDebugMode);
 
     if (hasChanged) {
       System.out.println("📌 聚合根最新版本：" + aggregateTracker.getCurrentAggregateRoot().getVersion());
@@ -74,12 +65,11 @@ public class OrderCommandService {
   }
 
   public void update() {
-    Long orderId = 1L;
     // 获取最新的持久化数据并创建对应实体
     OrderDO orderDO = orderRepository.selectById(orderId);
     Order order = StructMapper.to(orderDO, Order.class);
     List<OrderItemDO> orderItemDOS = orderItemRepository.selectByOrderId(orderId);
-    List<OrderItem> orderItems = StructMapper.toList(orderItemDOS, OrderItem.class);
+    List<OrderItem> orderItems = StructMapper.to(orderItemDOS, OrderItem.class);
     order.setItems(orderItems);
     OrderPaymentDO orderPaymentDO = orderPaymentRepository.selectByOrderId(orderId);
     OrderPayment payment = StructMapper.to(orderPaymentDO, OrderPayment.class);
@@ -92,14 +82,13 @@ public class OrderCommandService {
     payment.setPayType("e1r");
     orderItems.removeFirst();
     OrderItem orderItem = new OrderItem();
-    orderItem.setId(2L);
+    orderItem.setId(2L + orderId);
     orderItem.setOrderId(orderId);
     orderItem.setSkuCode("SKU_001111");
     orderItem.setQuantity(2001);
     orderItems.add(orderItem);
     // 完成聚合根业务处理后，持久化操作
-    boolean hasChanged =
-        aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, isDebugMode);
+    boolean hasChanged = aggregatePersistenceManager.persist(aggregateTracker, isDebugMode);
 
     if (hasChanged) {
       System.out.println("📌 聚合根最新版本：" + aggregateTracker.getCurrentAggregateRoot().getVersion());
@@ -108,12 +97,11 @@ public class OrderCommandService {
   }
 
   public void remove() {
-    Long orderId = 1L;
     // 获取最新的持久化数据并创建对应实体
     OrderDO orderDO = orderRepository.selectById(orderId);
     Order order = StructMapper.to(orderDO, Order.class);
     List<OrderItemDO> orderItemDOS = orderItemRepository.selectByOrderId(orderId);
-    List<OrderItem> orderItems = StructMapper.toList(orderItemDOS, OrderItem.class);
+    List<OrderItem> orderItems = StructMapper.to(orderItemDOS, OrderItem.class);
     order.setItems(orderItems);
     OrderPaymentDO orderPaymentDO = orderPaymentRepository.selectByOrderId(orderId);
     OrderPayment payment = StructMapper.to(orderPaymentDO, OrderPayment.class);
@@ -126,8 +114,7 @@ public class OrderCommandService {
     order.markAsDeleted();
 
     // 完成聚合根业务处理后，持久化操作
-    boolean hasChanged =
-        aggregatePersistenceManager.persist(aggregateTracker, entityDOMapping, isDebugMode);
+    boolean hasChanged = aggregatePersistenceManager.persist(aggregateTracker, isDebugMode);
 
     if (hasChanged) {
       System.out.println("📌 聚合根最新版本：" + aggregateTracker.getCurrentAggregateRoot().getVersion());

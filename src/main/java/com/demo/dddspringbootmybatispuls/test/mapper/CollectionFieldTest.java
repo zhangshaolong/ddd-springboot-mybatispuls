@@ -1,7 +1,7 @@
 package com.demo.dddspringbootmybatispuls.test.mapper;
 
 import com.demo.dddspringbootmybatispuls.common.mapper.MappingRule;
-import com.demo.dddspringbootmybatispuls.common.mapper.StructMapper;
+import com.demo.dddspringbootmybatispuls.common.mapper.StructMapperReflect;
 import java.util.List;
 
 public class CollectionFieldTest {
@@ -22,11 +22,11 @@ public class CollectionFieldTest {
                 (fieldValue, instance) -> {
                   // fieldValue = 源对象的orders字段值（List<OrderEntity>）
                   // 调用toList()转换集合，可传入集合元素的自定义规则
-                  return StructMapper.toList((List<OrderEntity>) fieldValue, OrderDTO.class);
+                  return StructMapperReflect.toList((List<OrderEntity>) fieldValue, OrderDTO.class);
                 }));
 
     // 转换
-    UserDTO target = StructMapper.to(source, UserDTO.class, rules);
+    UserDTO target = StructMapperReflect.to(source, UserDTO.class, rules);
     System.out.println("集合字段转换结果：");
     System.out.println(target);
   }

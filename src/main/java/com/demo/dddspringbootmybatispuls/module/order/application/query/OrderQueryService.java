@@ -27,6 +27,6 @@ public class OrderQueryService {
     if (orderDOList.isEmpty()) {
       return new ArrayList<>();
     }
-    return StructMapper.toList(orderDOList, OrderDTO.class);
+    return StructMapper.to(orderDOList, OrderDTO.class);
   }
 }

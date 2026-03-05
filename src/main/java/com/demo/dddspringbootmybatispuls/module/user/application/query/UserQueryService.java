@@ -29,6 +29,6 @@ public class UserQueryService {
     if (userDOList.isEmpty()) {
       return new ArrayList<>();
     }
-    return StructMapper.toList(userDOList, UserDTO.class);
+    return StructMapper.to(userDOList, UserDTO.class);
   }
 }

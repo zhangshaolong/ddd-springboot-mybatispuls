@@ -2,6 +2,7 @@ package com.demo.dddspringbootmybatispuls.common.aggregate;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.demo.dddspringbootmybatispuls.common.mapper.StructMapper;
+import io.github.linpeilie.annotations.AutoMapper;
 import jakarta.annotation.Resource;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +17,7 @@ public class AggregatePersistenceManager {
   @Resource private ApplicationContext applicationContext;
 
   @SuppressWarnings({"rawtypes"})
-  public boolean persist(
-      AggregateTracker aggregateTracker, Map<Class<?>, Class<?>> entityDoMapping, boolean debug) {
+  public boolean persist(AggregateTracker aggregateTracker, boolean debug) {
     AggregateChanges changes = aggregateTracker.compareChanges();
     if (!changes.hasAnyChanges()) {
       log.info("无变更需要持久化");
@@ -37,8 +37,11 @@ public class AggregatePersistenceManager {
         changes.getEntityChangesMap().entrySet()) {
       Class<?> entityClass = entry.getKey();
       AggregateChanges.EntityChanges<?> entityChanges = entry.getValue();
-
-      Class<?> doClass = entityDoMapping.get(entityClass);
+      AutoMapper autoMapper = entityClass.getAnnotation(AutoMapper.class);
+      if (autoMapper == null) {
+        throw new RuntimeException("未配置实体[" + entityClass.getName() + "]的AutoMapper注解");
+      }
+      Class<?> doClass = autoMapper.target();
       if (doClass == null) {
         throw new RuntimeException("未配置实体[" + entityClass.getName() + "]的DO映射关系");
       }
@@ -60,9 +63,8 @@ public class AggregatePersistenceManager {
     return true;
   }
 
-  public boolean persist(
-      AggregateTracker aggregateTracker, Map<Class<?>, Class<?>> entityDoMapping) {
-    return persist(aggregateTracker, entityDoMapping, false);
+  public boolean persist(AggregateTracker aggregateTracker) {
+    return persist(aggregateTracker, false);
   }
 
   /**
