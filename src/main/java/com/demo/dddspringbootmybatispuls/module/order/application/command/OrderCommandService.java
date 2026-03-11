@@ -28,11 +28,15 @@ public class OrderCommandService {
   @Resource private AggregateTracker aggregateTracker;
   @Resource private AggregatePersistenceManager aggregatePersistenceManager;
 
-  private final boolean isDebugMode = false;
+  private final boolean isDebugMode = true;
 
-  private final Long orderId = 13L;
+  private final Long orderId = 1L;
 
   public void create() {
+
+    // 为Order实体注册追踪，新建场景固定写法
+    Aggregate<Order> aggregate = aggregateTracker.build(Order.class);
+
     // 1. 构造新建时的各个实体对象
     Order order = new Order();
     order.setId(orderId);
@@ -50,9 +54,6 @@ public class OrderCommandService {
     payment.setAmount(new java.math.BigDecimal("200.00"));
     payment.setPayType("ALIPAY");
     order.setPayment(payment);
-
-    // 为Order实体注册追踪，新建场景固定写法
-    Aggregate<Order> aggregate = aggregateTracker.build(Order.class);
     aggregate.setRoot(order);
 
     // 持久化聚合根各实体
