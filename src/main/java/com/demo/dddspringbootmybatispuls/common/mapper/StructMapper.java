@@ -2,11 +2,12 @@ package com.demo.dddspringbootmybatispuls.common.mapper;
 
 import io.github.linpeilie.Converter;
 import io.github.linpeilie.CycleAvoidingMappingContext;
+import io.github.linpeilie.mapstruct.SpringContextUtils4Msp;
 import java.util.List;
 import java.util.Map;
 
 public class StructMapper {
-  public static Converter converter = new Converter();
+  public static Converter converter = SpringContextUtils4Msp.getBean(Converter.class);
 
   private StructMapper() {}
 
